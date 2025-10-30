@@ -1,118 +1,42 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ALBAY STEPS • Giriş / Kayıt</title>
-  <style>
-    body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;display:grid;place-items:center;height:100vh}
-    .card{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:22px;min-width:320px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    h1{color:#e11d2e;margin:0 0 10px}
-    input{width:260px;padding:12px;background:#111;border:1px solid #2a2a2a;border-radius:10px;margin-top:8px;color:#eee}
-    button{margin-top:14px;padding:10px 14px;border-radius:10px;border:1px solid #2a2a2a;background:#b30000;color:#fff;font-weight:700;width:260px}
-    .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
-    .tab{padding:8px 14px;border:1px solid #2a2a2a;border-radius:999px;background:#161616;cursor:pointer}
-    .tab.active{background:#b30000;border-color:#b30000}
-    .msg{margin-top:10px;font-size:13px;opacity:.85}
-    .ok{color:#16a34a}.err{color:#ef4444}
-    .small{opacity:.7;font-size:13px;margin-top:4px}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALBAY STEPS • Giriş</title>
+<style>
+body{background:#0b0b0b;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.card{background:#111;border:1px solid #333;padding:25px;border-radius:15px;width:320px;text-align:center}
+input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:none;background:#222;color:#fff}
+button{width:100%;padding:10px;background:#e11d2e;border:none;border-radius:8px;color:#fff;font-weight:700;margin-top:10px}
+a{color:#aaa;font-size:13px}
+</style>
 </head>
 <body>
-  <div class="card">
-    <h1>ALBAY STEPS • Giriş</h1>
+<div class="card">
+  <h2>ALBAY STEPS</h2>
+  <input id="email" placeholder="E-posta">
+  <input id="pass" type="password" placeholder="Şifre">
+  <button id="login">Giriş Yap</button>
+</div>
 
-    <div class="tabs">
-      <div id="tabLogin"  class="tab active">Giriş Yap</div>
-      <div id="tabSignup" class="tab">Kayıt Ol</div>
-    </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-    <form id="loginForm">
-      <input id="lemail"  type="email"    placeholder="E-posta" required />
-      <input id="lpass"   type="password" placeholder="Şifre"   required />
-      <button type="submit">Giriş Yap</button>
-    </form>
+const firebaseConfig = {
+  apiKey:"AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+  authDomain:"albay-steps.firebaseapp.com",
+  projectId:"albay-steps"
+};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
 
-    <form id="signupForm" style="display:none">
-      <input id="semail"  type="email"    placeholder="E-posta" required />
-      <input id="spass"   type="password" placeholder="Şifre (min 6)" required />
-      <button type="submit">Kayıt Ol</button>
-      <div class="small">Kayıt sonrası otomatik giriş yapılır.</div>
-    </form>
-
-    <div id="msg" class="msg"></div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
-    // — Senin Firebase bilgilerin —
-    const firebaseConfig = {
-      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-      authDomain: "albay-steps.firebaseapp.com",
-      projectId: "albay-steps",
-      storageBucket: "albay-steps.firebasestorage.app",
-      messagingSenderId: "398122699141",
-      appId: "1:398122699141:web:787430d8d67c3451dedcec",
-      measurementId: "G-HXLNJ884EL"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-
-    const tabLogin  = document.getElementById("tabLogin");
-    const tabSignup = document.getElementById("tabSignup");
-    const loginForm = document.getElementById("loginForm");
-    const signupForm= document.getElementById("signupForm");
-    const msg = document.getElementById("msg");
-
-    function show(tab){
-      if(tab==="login"){
-        loginForm.style.display="block"; signupForm.style.display="none";
-        tabLogin.classList.add("active"); tabSignup.classList.remove("active");
-      }else{
-        loginForm.style.display="none"; signupForm.style.display="block";
-        tabLogin.classList.remove("active"); tabSignup.classList.add("active");
-      }
-      msg.textContent=""; msg.className="msg";
-    }
-    tabLogin.onclick = ()=>show("login");
-    tabSignup.onclick= ()=>show("signup");
-
-    onAuthStateChanged(auth, (user)=>{ if(user) location.href="panel.html"; });
-
-    // Giriş
-    loginForm.addEventListener("submit", (e)=>{
-      e.preventDefault();
-      const email = document.getElementById("lemail").value.trim();
-      const pass  = document.getElementById("lpass").value;
-      signInWithEmailAndPassword(auth, email, pass)
-        .then(()=>{ msg.textContent="Giriş başarılı ✅"; msg.className="msg ok"; location.href="panel.html"; })
-        .catch(err=>{ msg.textContent=err.message; msg.className="msg err"; });
-    });
-
-    // Kayıt
-    signupForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      const email = document.getElementById("semail").value.trim();
-      const pass  = document.getElementById("spass").value;
-      try{
-        await createUserWithEmailAndPassword(auth, email, pass);
-        // Firestore’da kullanıcı belgesi oluştur
-        const uref = doc(db, "users", email);
-        const usnap = await getDoc(uref);
-        if(!usnap.exists()){
-          await setDoc(uref, { email, role:"user", points:0, totalSteps:0, createdAt: serverTimestamp() });
-        }
-        msg.textContent="Kayıt başarılı ✅ yönlendiriliyor…"; msg.className="msg ok";
-        location.href="panel.html";
-      }catch(err){
-        msg.textContent = err.message; msg.className="msg err";
-      }
-    });
-  </script>
+document.getElementById("login").onclick=()=>{
+  signInWithEmailAndPassword(auth,email.value,pass.value)
+  .then(()=>location.href="panel.html")
+  .catch(e=>alert("Hata: "+e.message));
+};
+</script>
 </body>
 </html>
