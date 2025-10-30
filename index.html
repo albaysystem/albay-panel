@@ -1,59 +1,55 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>ALBAY PANEL GİRİŞ</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ALBAY STEPS • Giriş</title>
 <style>
-body { background:#0b0b0b; color:white; font-family:Arial; text-align:center; padding-top:80px; }
-input, button {
-  width: 260px; padding: 12px; border-radius:5px; border:none; margin-top:10px;
-  font-size:16px; background:#111; color:white;
-}
-button { background:#b30000; font-weight:bold; cursor:pointer; }
-button:hover { opacity:.8; }
+  body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;display:grid;place-items:center;height:100vh}
+  .card{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:22px;min-width:320px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  input,button{width:260px;padding:12px;border-radius:10px;border:1px solid #2a2a2a;margin-top:10px;background:#161616;color:#fff}
+  button{background:#b30000;font-weight:700;cursor:pointer}
+  h1{color:#e11d2e;margin:0 0 10px}
+  .small{opacity:.7;font-size:13px}
 </style>
 </head>
 <body>
+  <div class="card">
+    <h1>ALBAY STEPS</h1>
+    <input id="email" type="email" placeholder="E-posta" required />
+    <input id="pass" type="password" placeholder="Şifre" required />
+    <button id="loginBtn">Giriş Yap</button>
+    <p class="small">Girişte sorun olursa Firebase → Authentication → Authorized domains içine <b>albaysystem.github.io</b> ekli olmalı.</p>
+  </div>
 
-<h2>ALBAY PANEL</h2>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-<form>
-  <input id="email" type="email" placeholder="E-posta" required><br>
-  <input id="parola" type="password" placeholder="Şifre" required><br>
-  <button type="submit">Giriş Yap</button>
-</form>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+      authDomain: "albay-steps.firebaseapp.com",
+      projectId: "albay-steps",
+      storageBucket: "albay-steps.firebasestorage.app",
+      messagingSenderId: "398122699141",
+      appId: "1:398122699141:web:787430d8d67c3451dedcec",
+      measurementId: "G-HXLNJ884EL"
+    };
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-  authDomain: "albay-steps.firebaseapp.com",
-  projectId: "albay-steps",
-  storageBucket: "albay-steps.firebasestorage.app",
-  messagingSenderId: "398122699141",
-  appId: "1:398122699141:web:787430d8d67c3451dedcec",
-  measurementId: "G-HXLNJ884EL"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-document.querySelector("form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("email").value;
-  const parola = document.getElementById("parola").value;
-
-  try {
-    await signInWithEmailAndPassword(auth, email, parola);
-    window.location.href = "panel.html";
-  } catch (e) {
-    alert("Hatalı giriş ❌");
-  }
-});
-</script>
-
+    document.getElementById("loginBtn").onclick = async () => {
+      const email = document.getElementById("email").value.trim();
+      const pass  = document.getElementById("pass").value;
+      if(!email || !pass){ alert("E-posta ve şifre gir."); return; }
+      try{
+        await signInWithEmailAndPassword(auth, email, pass);
+        window.location.href = "panel.html";
+      }catch(err){
+        alert("Hatalı giriş ❌ " + (err.code || err.message));
+      }
+    };
+  </script>
 </body>
 </html>
