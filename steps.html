@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="tr">
 <head>
@@ -5,169 +6,152 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ALBAY STEPS • Adım Geçmişi</title>
   <style>
-    body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;padding:20px}
-    .wrap{max-width:780px;margin:auto}
-    h1{color:#e11d2e;margin:0 0 14px}
-    .top{display:flex;gap:10px;align-items:center;margin-bottom:14px}
-    button{padding:9px 12px;border-radius:10px;border:1px solid #2a2a2a;background:#b30000;color:#fff;font-weight:700}
-    .card{background:#111;border:1px solid #2a2a2a;border-radius:14px;padding:14px}
-    .kpis{display:flex;gap:10px;margin-bottom:12px}
-    .kpis div{flex:1;background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:12px;text-align:center}
-    input{background:#0f0f0f;border:1px solid #2a2a2a;border-radius:10px;color:#eee;padding:10px;width:100%}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border-bottom:1px solid #262626;padding:10px;text-align:left}
-    th{opacity:.8}
-    .right{text-align:right}
-    .muted{opacity:.7}
-    .empty{padding:16px;text-align:center;opacity:.7}
+    :root{--bg:#0b0b0b;--card:#111;--muted:#aaa;--line:#242424;--red:#e11d2e;}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:#eee;font-family:system-ui,Arial}
+    .wrap{max-width:840px;margin:24px auto;padding:16px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .title{font-size:22px;font-weight:800;color:#fff}
+    .back{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#b30000;color:#fff;font-weight:700;text-decoration:none}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+    .row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed var(--line);padding:10px 4px}
+    .row:last-child{border-bottom:none}
+    .when{font-size:13px;color:var(--muted)}
+    .amount{font-weight:800}
+    .section{margin-top:18px}
+    .section h3{margin:0 0 8px;font-size:14px;color:#ddd;letter-spacing:.3px}
+    .kpi{display:flex;gap:10px;margin-top:8px}
+    .kpi div{background:#161616;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+    .muted{color:var(--muted)}
+    .center{display:grid;place-items:center}
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <h1 style="flex:1">Adım Geçmişi 👣</h1>
-    <button id="backBtn">◀ Panele Dön</button>
-  </div>
-
-  <div class="kpis">
-    <div>Bugün: <b id="today">0</b></div>
-    <div>Son 7 Gün: <b id="w7">0</b></div>
-    <div>Toplam: <b id="total">0</b></div>
-  </div>
-
-  <div class="card">
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
-      <input id="search" placeholder="Tarih/Not ara (örn: 2025-10-30, 'koşu')" />
-      <button id="refresh">Yenile</button>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">Adım Geçmişi</div>
+      <a class="back" href="panel.html">Panele Dön</a>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Tarih-Saat</th>
-          <th class="right">Adım (+)</th>
-          <th>Not</th>
-        </tr>
-      </thead>
-      <tbody id="rows">
-        <tr><td class="empty" colspan="3">Yükleniyor…</td></tr>
-      </tbody>
-    </table>
-    <div class="muted" style="margin-top:8px">* Test butonuyla eklenen her 100 adım buraya düşer.</div>
+
+    <div id="who" class="muted" style="margin-bottom:8px">Kullanıcı yükleniyor…</div>
+
+    <div class="kpi">
+      <div>Bugün Toplam: <b id="sumToday">0</b></div>
+      <div>Dün Toplam: <b id="sumYest">0</b></div>
+      <div>Genel Puan: <b id="sumPoints">0</b></div>
+    </div>
+
+    <div id="todayBox" class="section">
+      <h3>Bugün</h3>
+      <div id="todayList" class="card"></div>
+    </div>
+
+    <div id="yestBox" class="section">
+      <h3>Dün</h3>
+      <div id="yestList" class="card"></div>
+    </div>
+
+    <div id="oldBox" class="section">
+      <h3>Daha Eskiler</h3>
+      <div id="oldList" class="card"></div>
+    </div>
+
+    <div id="empty" class="center muted" style="display:none;margin-top:24px;">Henüz kayıt yok.</div>
   </div>
-</div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-    authDomain: "albay-steps.firebaseapp.com",
-    projectId: "albay-steps",
-    storageBucket: "albay-steps.firebasestorage.app",
-    messagingSenderId: "398122699141",
-    appId: "1:398122699141:web:787430d8d67c3451dedcec",
-    measurementId: "G-HXLNJ884EL"
-  };
+    // — Aynı config —
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+      authDomain: "albay-steps.firebaseapp.com",
+      projectId: "albay-steps",
+      storageBucket: "albay-steps.firebasestorage.app",
+      messagingSenderId: "398122699141",
+      appId: "1:398122699141:web:787430d8d67c3451dedcec",
+      measurementId: "G-HXLNJ884EL"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
 
-  const rowsEl   = document.getElementById("rows");
-  const searchEl = document.getElementById("search");
-  const backBtn  = document.getElementById("backBtn");
-  const refreshBtn = document.getElementById("refresh");
+    const who  = document.getElementById("who");
+    const sumTodayEl = document.getElementById("sumToday");
+    const sumYestEl  = document.getElementById("sumYest");
+    const sumPtsEl   = document.getElementById("sumPoints");
 
-  const todayEl = document.getElementById("today");
-  const w7El    = document.getElementById("w7");
-  const totalEl = document.getElementById("total");
+    const todayList = document.getElementById("todayList");
+    const yestList  = document.getElementById("yestList");
+    const oldList   = document.getElementById("oldList");
+    const emptyBox  = document.getElementById("empty");
 
-  backBtn.onclick = () => location.href = "panel.html";
-  refreshBtn.onclick = () => load();
+    // Yardımcılar
+    const fmt = (d)=> d.toLocaleString("tr-TR", {hour:"2-digit", minute:"2-digit"}) + " • " + d.toLocaleDateString("tr-TR");
+    const isSameDay = (a,b)=> a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
-  function trDateString(d){
-    return new Date(d).toLocaleString("tr-TR");
-  }
-
-  function calcKPIs(items){
-    const now = new Date();
-    const dayId = now.toISOString().slice(0,10); // YYYY-MM-DD
-
-    let today=0, last7=0, total=0;
-    for(const it of items){
-      total += it.amount||0;
-      const d = new Date(it.timeRaw || it.time);
-      const ds = d.toISOString().slice(0,10);
-      if(ds === dayId) today += it.amount||0;
-
-      const diff = (now - d) / (1000*60*60*24);
-      if(diff <= 7) last7 += it.amount||0;
-    }
-    return {today, last7, total};
-  }
-
-  async function load(){
-    const user = auth.currentUser;
-    if(!user){ location.href="index.html"; return; }
-
-    // kullanıcı toplam için ana doc'u al
-    const uref = doc(db,"users",user.email);
-    const us = await getDoc(uref);
-    const udata = us.data() || {};
-    totalEl.textContent = udata.totalSteps ?? 0;
-
-    // stepsLog listesi (zaman azalan)
-    const q = query(collection(db,"users",user.email,"stepsLog"), orderBy("timeRaw","desc"));
-    const snap = await getDocs(q);
-
-    const items = [];
-    snap.forEach(d => items.push({id:d.id, ...d.data()}));
-
-    // KPIs
-    const k = calcKPIs(items);
-    todayEl.textContent = k.today;
-    w7El.textContent = k.last7;
-
-    render(items);
-  }
-
-  function render(items){
-    const q = (searchEl.value || "").toLowerCase().trim();
-    let list = items.map(x => ({
-      time: x.time || trDateString(x.timeRaw || Date.now()),
-      timeRaw: x.timeRaw || Date.now(),
-      amount: x.amount || 0,
-      note: x.note || ""
-    }));
-
-    if(q){
-      list = list.filter(x =>
-        x.time.toLowerCase().includes(q) || x.note.toLowerCase().includes(q)
-      );
+    function groupToBox(date){
+      const now = new Date();
+      const yest = new Date(now); yest.setDate(now.getDate()-1);
+      if (isSameDay(date, now)) return "today";
+      if (isSameDay(date, yest)) return "yest";
+      return "old";
     }
 
-    if(list.length === 0){
-      rowsEl.innerHTML = `<tr><td class="empty" colspan="3">Kayıt yok</td></tr>`;
-      return;
+    function addRow(container, whenText, amount){
+      const row = document.createElement("div"); row.className="row";
+      row.innerHTML = `<div><div class="when">${whenText}</div></div>
+                       <div class="amount">+${amount} adım</div>`;
+      container.appendChild(row);
     }
 
-    rowsEl.innerHTML = list.map(x => `
-      <tr>
-        <td>${x.time}</td>
-        <td class="right">+${x.amount}</td>
-        <td>${x.note || "-"}</td>
-      </tr>
-    `).join("");
-  }
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){ location.href="index.html"; return; }
+      const email = user.email;
+      who.textContent = email;
 
-  searchEl.addEventListener("input", load);
+      // Hem "time" (serverTimestamp) hem "timeRaw" (Date) destekle
+      let snapshots;
+      try {
+        const q1 = query(collection(db,"users",email,"stepsLog"), orderBy("time","desc"));
+        snapshots = await getDocs(q1);
+      } catch (e) {
+        const q2 = query(collection(db,"users",email,"stepsLog"), orderBy("timeRaw","desc"));
+        snapshots = await getDocs(q2);
+      }
 
-  onAuthStateChanged(auth, (u)=>{
-    if(!u){ location.href="index.html"; return; }
-    load().catch(e => alert("Geçmiş yüklenemedi: "+e.message));
-  });
-</script>
+      let totalToday = 0, totalYest = 0, totalPoints = 0;
+      let hasAny = false;
+
+      snapshots.forEach(docSnap=>{
+        const data = docSnap.data() || {};
+        const amount = Number(data.amount || 0);
+        // Firestore Timestamp veya JS Date olabilir:
+        const ts = data.time?.toDate ? data.time.toDate() : (data.timeRaw ? new Date(data.timeRaw.seconds ? data.timeRaw.seconds*1000 : data.timeRaw) : null);
+        if (!ts) return;
+        hasAny = true;
+
+        const whenText = fmt(ts);
+        const bucket = groupToBox(ts);
+
+        if (bucket==="today"){ addRow(todayList, whenText, amount); totalToday += amount; }
+        else if (bucket==="yest"){ addRow(yestList, whenText, amount); totalYest += amount; }
+        else { addRow(oldList, whenText, amount); }
+
+        totalPoints += Math.floor(amount/100);
+      });
+
+      sumTodayEl.textContent = totalToday;
+      sumYestEl.textContent  = totalYest;
+      sumPtsEl.textContent   = totalPoints;
+
+      if(!hasAny){
+        emptyBox.style.display="block";
+        todayList.innerHTML = ""; yestList.innerHTML=""; oldList.innerHTML="";
+      }
+    });
+  </script>
 </body>
 </html>
