@@ -2,76 +2,70 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALBAY PANEL</title>
 
 <style>
-body { background:#0b0b0b; color:white; font-family:Arial; margin:0; }
-.topbar {
-  background:#111; padding:14px; display:flex; justify-content:space-between;
-  align-items:center; border-bottom:1px solid #222;
+body {
+  background:#0b0b0b;
+  color:white;
+  font-family:Arial;
+  margin:0;
 }
-.logo { color:#b30000; font-size:20px; font-weight:bold; }
-.logout { background:#b30000; border:none; padding:8px 14px; color:white; border-radius:6px; }
-.container { padding:25px; text-align:center; }
-
+header {
+  background:#111;
+  padding:18px;
+  font-size:18px;
+  border-bottom:1px solid #b30000;
+}
+.wrap {
+  padding:20px;
+}
 .card {
-  background:#151515; border:1px solid #222; border-radius:14px;
-  padding:20px; margin-top:20px;
+  background:#141414;
+  border:1px solid #222;
+  padding:18px;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+button, a.btn {
+  display:inline-block;
+  background:#b30000;
+  padding:10px 14px;
+  color:white;
+  border:none;
+  border-radius:8px;
+  text-decoration:none;
+  margin-top:10px;
+  font-weight:bold;
 }
 </style>
-
 </head>
+
 <body>
 
-<div class="topbar">
-  <div class="logo">ALBAY PANEL</div>
-  <button class="logout" onclick="logout()">Çıkış</button>
-</div>
+<header>
+  ALBAY PANEL — Hoş geldin 👑
+</header>
 
-<div class="container">
-  <h1>Hoş geldin Komutan 👑</h1>
-  <p>Bu ekran artık **yönetim panelin**.</p>
-
+<div class="wrap">
+  
   <div class="card">
-    <h2>🚶 Adım - Coin Sistemi</h2>
-    <p>Burada: Kullanıcıların attığı adımlar, coin dönüşümleri, bakiye transferi vs. olacak.</p>
+    <h3>Kullanıcı Yönetimi</h3>
+    <p>Kullanıcıları görüntüle, bakiye ekle, VIP yap.</p>
+    <a class="btn" href="#">Yakında aktif 🔥</a>
   </div>
 
   <div class="card">
-    <h2>👥 Kullanıcı Yönetimi</h2>
-    <p>Kullanıcı ekleme / silme / bakiye artırma alanı buraya gelecek.</p>
+    <h3>Sistem Durumu</h3>
+    <p>ALBAY Steps sistemi çalışıyor ✅</p>
   </div>
+
+  <div class="card">
+    <a class="btn" href="index.html">Çıkış Yap</a>
+  </div>
+
 </div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-  authDomain: "albay-steps.firebaseapp.com",
-  projectId: "albay-steps",
-  storageBucket: "albay-steps.firebasestorage.app",
-  messagingSenderId: "398122699141",
-  appId: "1:398122699141:web:787430d8d67c3451dedcec"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// Giriş yapılmamışsa geri login sayfasına at
-onAuthStateChanged(auth, (user)=>{
-  if(!user){
-    window.location = "index.html";
-  }
-});
-
-window.logout = function(){
-  signOut(auth).then(()=>{
-    window.location = "index.html";
-  });
-}
-</script>
 
 </body>
 </html>
