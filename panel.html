@@ -1,19 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>ALBAY PANEL</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body { background:#0b0b0b; color:white; text-align:center; padding-top:80px; font-family:Arial; }
-h1 { color:#b30000; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ALBAY STEPS • Panel</title>
+  <style>
+    body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;display:grid;place-items:center;height:100vh}
+    .card{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:22px;min-width:320px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{color:#e11d2e;margin:0 0 10px}
+    .kpi{display:flex;gap:12px;justify-content:center;margin:12px 0}
+    .kpi div{background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px}
+    button{margin-top:14px;padding:10px 14px;border-radius:10px;border:1px solid #2a2a2a;background:#b30000;color:#fff;font-weight:700}
+    .small{opacity:.7;font-size:13px}
+  </style>
 </head>
 <body>
+  <div class="card">
+    <h1>ALBAY STEPS • Panel</h1>
+    <div id="who" class="small">Yükleniyor…</div>
 
-<h1>🔴 ALBAY PANEL'E HOŞ GELDİN</h1>
-<p>Giriş başarılı ✅</p>
-<p>Buraya panel menülerini ekleyeceğiz.</p>
+    <div class="kpi">
+      <div>Bugünkü Adım: <b id="todaySteps">0</b></div>
+      <div>Toplam Adım: <b id="totalSteps">0</b></div>
+      <div>Puan: <b id="points">0</b></div>
+    </div>
 
+    <button id="mockStep">+100 Adım Ekle (Test)</button><br/>
+    <button id="signOut">Çıkış Yap</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+    // --- Senin Firebase bilgilerin ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+      authDomain: "albay-steps.firebaseapp.com",
+      projectId: "albay-steps",
+      storageBucket: "albay-steps.firebasestorage.app",
+      messagingSenderId: "398122699141",
+      appId: "1:398122699141:web:787430d8d67c3451dedcec",
+      measurementId: "G-HXLNJ884EL"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const whoEl = document.getElementById("who");
+    const todayStepsEl = document.getElementById("todaySteps");
+    const totalStepsEl = document.getElementById("totalSteps");
+    const pointsEl = document.getElementById("points");
+    const mockBtn = document.getElementById("mockStep");
+    const signOutBtn = document.getElementById("signOut");
+
+    function todayId(){
+      const d = new Date(); const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    async function ensureUserDoc(email){
+      const uref = doc(db, "users", email);
+      const snap = await getDoc(uref);
+      if(!snap.exists()){
+        await setDoc(uref, { email, role: "user", points: 0, totalSteps: 0, createdAt: serverTimestamp() });
+      }
+      return uref;
+    }
+
+    async function loadDashboard(email){
+      whoEl.textContent = email;
+      const uref = await ensureUserDoc(email);
+      const usnap = await getDoc(uref);
+      const udata = usnap.data() || {};
+      totalStepsEl.textContent = udata.totalSteps ?? 0;
+      pointsEl.textContent = udata.points ?? 0;
+
+      const dsRef = doc(db, "users", email, "dailyStats", todayId());
+      const dsSnap = await getDoc(dsRef);
+      todayStepsEl.textContent = dsSnap.exists() ? (dsSnap.data().steps ?? 0) : 0;
+
+      // Test butonu: 100 adım ekle (puan = adım/100)
+      mockBtn.onclick = async () => {
+        const add = 100;
+        const dsS = await getDoc(dsRef);
+        const current = dsS.exists() ? (dsS.data().steps || 0) : 0;
+        const newSteps = current + add;
+        const earned = Math.floor(newSteps / 100); // 100 adım = 1 puan (örnek)
+        await setDoc(dsRef, { steps: newSteps, earned, updatedAt: serverTimestamp() }, { merge:true });
+
+        const uS2 = await getDoc(uref);
+        const uD2 = uS2.data() || {};
+        await updateDoc(uref, {
+          totalSteps: (uD2.totalSteps || 0) + add,
+          points: (uD2.points || 0) + Math.floor(add/100)
+        });
+
+        // ekranda güncelle
+        todayStepsEl.textContent = newSteps;
+        totalStepsEl.textContent = (uD2.totalSteps || 0) + add;
+        pointsEl.textContent = (uD2.points || 0) + Math.floor(add/100);
+        alert("100 adım eklendi (test) ✅");
+      };
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if(!user){ window.location.href = "index.html"; return; }
+      loadDashboard(user.email).catch(e => alert("Panel yüklenemedi: " + e.message));
+    });
+
+    signOutBtn.onclick = () => signOut(auth).then(()=>location.href="index.html");
+  </script>
 </body>
 </html>
