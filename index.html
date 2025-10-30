@@ -72,3 +72,19 @@ window.login = function(){
 
 </body>
 </html>
+// Giriş kontrolü
+document.querySelector("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value;
+  const parola = document.getElementById("password").value;
+
+  const docRef = doc(db, "Kullanıcılar", email);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    alert("Giriş başarılı ✅");
+    window.location.href = "panel.html";
+  } else {
+    alert("Hatalı giriş ❌");
+  }
+});
