@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>ALBAY PANEL</title>
+
+<style>
+body { background:#0b0b0b; color:white; font-family:Arial; margin:0; }
+.topbar {
+  background:#111; padding:14px; display:flex; justify-content:space-between;
+  align-items:center; border-bottom:1px solid #222;
+}
+.logo { color:#b30000; font-size:20px; font-weight:bold; }
+.logout { background:#b30000; border:none; padding:8px 14px; color:white; border-radius:6px; }
+.container { padding:25px; text-align:center; }
+
+.card {
+  background:#151515; border:1px solid #222; border-radius:14px;
+  padding:20px; margin-top:20px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">ALBAY PANEL</div>
+  <button class="logout" onclick="logout()">Çıkış</button>
+</div>
+
+<div class="container">
+  <h1>Hoş geldin Komutan 👑</h1>
+  <p>Bu ekran artık **yönetim panelin**.</p>
+
+  <div class="card">
+    <h2>🚶 Adım - Coin Sistemi</h2>
+    <p>Burada: Kullanıcıların attığı adımlar, coin dönüşümleri, bakiye transferi vs. olacak.</p>
+  </div>
+
+  <div class="card">
+    <h2>👥 Kullanıcı Yönetimi</h2>
+    <p>Kullanıcı ekleme / silme / bakiye artırma alanı buraya gelecek.</p>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+  authDomain: "albay-steps.firebaseapp.com",
+  projectId: "albay-steps",
+  storageBucket: "albay-steps.firebasestorage.app",
+  messagingSenderId: "398122699141",
+  appId: "1:398122699141:web:787430d8d67c3451dedcec"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Giriş yapılmamışsa geri login sayfasına at
+onAuthStateChanged(auth, (user)=>{
+  if(!user){
+    window.location = "index.html";
+  }
+});
+
+window.logout = function(){
+  signOut(auth).then(()=>{
+    window.location = "index.html";
+  });
+}
+</script>
+
+</body>
+</html>
