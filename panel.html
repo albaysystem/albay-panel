@@ -1,123 +1,142 @@
- <!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ALBAY STEPS • Panel</title>
-  <style>
-    body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;display:grid;place-items:center;height:100vh}
-    .card{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:22px;min-width:320px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    h1{color:#e11d2e;margin:0 0 10px}
-    .kpi{display:flex;gap:12px;justify-content:center;margin:12px 0}
-    .kpi div{background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px}
-    button{margin-top:14px;padding:10px 14px;border-radius:10px;border:1px solid #2a2a2a;background:#b30000;color:#fff;font-weight:700}
-    .small{opacity:.7;font-size:13px}
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>ALBAY STEPS</h1>
-    <div id="who" class="small">Yükleniyor…</div>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ALBAY STEPS</title>
 
-    <div class="kpi">
-      <div>Günlük<br><b id="todaySteps">0</b></div>
-      <div>Toplam<br><b id="totalSteps">0</b></div>
-      <div>Puan<br><b id="points">0</b></div>
-    </div>
-<button id="stepsHistory" style="
-  display:block;
-  width:100%;
-  margin-bottom:15px;
-  padding:12px;
-  border-radius:12px;
-  background:#b30000;
+<style>
+body {
+  background:#000;
   color:#fff;
-  font-weight:700;
-  text-align:center;
+  font-family: Arial, sans-serif;
+  margin:0;
+  padding:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.card {
+  background:#111;
+  padding:25px;
+  width:90%;
+  max-width:340px;
+  border-radius:14px;
+  box-shadow:0 0 20px rgba(255,0,0,0.3);
+}
+h1 { text-align:center; margin-bottom:5px; }
+.small { text-align:center; font-size:13px; margin-bottom:15px; }
+
+.kpi div {
+  margin-bottom:12px;
+  font-size:18px;
+}
+
+button {
+  width:100%;
+  padding:12px;
+  margin-bottom:14px;
+  background:#b30000;
   border:none;
-">
-  Adım Geçmişini Gör 👣
-</button>
-    
-    <button id="mockStep">+100 Adım (Test)</button>
-    <button id="signOut">Çıkış Yap</button>
-  </div>
+  border-radius:12px;
+  font-weight:700;
+  color:#fff;
+  font-size:15px;
+  cursor:pointer;
+}
+button:hover { background:#d10000; }
+</style>
+</head>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+<body>
+<div class="card">
+<h1>ALBAY STEPS</h1>
+<div id="who" class="small">Yükleniyor...</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-      authDomain: "albay-steps.firebaseapp.com",
-      projectId: "albay-steps",
-      storageBucket: "albay-steps.firebasestorage.app",
-      messagingSenderId: "398122699141",
-      appId: "1:398122699141:web:787430d8d67c3451dedcec",
-      measurementId: "G-HXLNJ884EL"
-    };
+<div class="kpi">
+  <div>Günlük<br><b id="todaySteps">0</b></div>
+  <div>Toplam<br><b id="totalSteps">0</b></div>
+  <div>Puan<br><b id="points">0</b></div>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
+<!-- ✅ Adım Geçmişini Gör Butonu -->
+<button id="stepsHistory">Adım Geçmişini Gör 👣</button>
 
-    const whoEl = document.getElementById("who");
-    const todayStepsEl = document.getElementById("todaySteps");
-    const totalStepsEl = document.getElementById("totalSteps");
-    const pointsEl = document.getElementById("points");
-    const mockBtn = document.getElementById("mockStep");
-    const signOutBtn = document.getElementById("signOut");
+<button id="mockStep">+100 Adım (Test)</button>
+<button id="signOut">Çıkış Yap</button>
+</div>
 
-    document.getElementById("stepsHistory").onclick = () => {
-      window.location.href = "steps.html";
-    };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-    onAuthStateChanged(auth, async (user) => {
-      if(!user){ window.location.href = "index.html"; return; }
+const firebaseConfig = {
+  apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkw7xmZk",
+  authDomain: "albay-steps.firebaseapp.com",
+  projectId: "albay-steps",
+  storageBucket: "albay-steps.appspot.com",
+  messagingSenderId: "102626470999",
+  appId: "1:102626470999:web:2c697025141254ce6d2c4d"
+};
 
-      whoEl.textContent = user.email;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-      const uref = doc(db, "users", user.email);
-      const usnap = await getDoc(uref);
+const whoEl = document.getElementById("who");
+const todayStepsEl = document.getElementById("todaySteps");
+const totalStepsEl = document.getElementById("totalSteps");
+const pointsEl = document.getElementById("points");
+const mockBtn = document.getElementById("mockStep");
+const stepsHistoryBtn = document.getElementById("stepsHistory");
+const signOutBtn = document.getElementById("signOut");
 
-      if(usnap.exists()){
-        const u = usnap.data();
-        totalStepsEl.textContent = u.totalSteps ?? 0;
-        pointsEl.textContent = u.points ?? 0;
-      }
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return location.href = "index.html";
+  whoEl.textContent = user.email;
 
-    });
+  const ref = doc(db, "users", user.email);
+  const snap = await getDoc(ref);
+  const u = snap.data() || {};
 
-    mockBtn.onclick = async () => {
-      const add = 100;
-      const email = auth.currentUser.email;
-      const time = new Date().toLocaleString("tr-TR");
+  totalStepsEl.textContent = u.totalSteps || 0;
+  todayStepsEl.textContent = u.todaySteps || 0;
+  pointsEl.textContent = u.points || 0;
+});
 
-      // ✅ Adım Geçmişi Kaydı
-      await setDoc(doc(db,"users",email,"stepsLog",Date.now().toString()), {
-        amount: add,
-        time: time
-      });
+mockBtn.onclick = async () => {
+  const add = 100;
+  const email = auth.currentUser.email;
+  const time = new Date().toLocaleString("tr-TR");
 
-      const uref = doc(db,"users",email);
-      const snap = await getDoc(uref);
-      const u = snap.data() || {};
+  await setDoc(doc(db,"users",email,"stepsLog",`${Date.now()}`), {
+    amount: add,
+    time: time
+  });
 
-      await updateDoc(uref,{
-        totalSteps:(u.totalSteps||0)+add,
-        points:(u.points||0)+Math.floor(add/100)
-      });
+  const ref = doc(db,"users",email);
+  const snap = await getDoc(ref);
+  const u = snap.data() || {};
 
-      totalStepsEl.textContent = (u.totalSteps||0)+add;
-      pointsEl.textContent = (u.points||0)+Math.floor(add/100);
+  await updateDoc(ref,{
+    totalSteps:(u.totalSteps||0)+add,
+    points:(u.points||0)+Math.floor(add/100)
+  });
 
-      todayStepsEl.textContent = Number(todayStepsEl.textContent)+add;
+  totalStepsEl.textContent = (u.totalSteps||0)+add;
+  pointsEl.textContent = (u.points||0)+Math.floor(add/100);
 
-      alert("+100 adım eklendi ✅");
-    };
+  alert("+100 adım eklendi ✅");
+};
 
-    signOutBtn.onclick = () => signOut(auth).then(()=>location.href="index.html");
-  </script>
+// ✅ Adım Geçmişi sayfasına git
+stepsHistoryBtn.onclick = () => location.href = "steps.html";
+
+// Çıkış
+signOutBtn.onclick = () => signOut(auth).then(()=>location.href="index.html");
+</script>
+
 </body>
 </html>
