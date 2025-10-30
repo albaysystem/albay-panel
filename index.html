@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALBAY PANEL GİRİŞ</title>
+
+<style>
+body { background:#0b0b0b; color:white; font-family:Arial; text-align:center; padding-top:130px; }
+input {
+  width: 250px; padding: 12px; margin: 6px;
+  background:#111; border:1px solid #333; border-radius:8px; color:white;
+}
+button {
+  width: 250px; padding: 12px;
+  background:#b30000; color:white; border:none; border-radius:8px;
+  font-weight:bold; margin-top:8px;
+}
+.msg { margin-top:10px; font-size:14px; }
+.ok { color:#16a34a; }
+.err { color:#ef4444; }
+</style>
+
+</head>
+<body>
+
+<h1 style="color:#b30000;">ALBAY PANEL</h1>
+<p>Lütfen giriş yap:</p>
+
+<input id="mail" type="email" placeholder="E-posta"><br>
+<input id="pass" type="password" placeholder="Şifre"><br>
+<button onclick="login()">Giriş Yap</button>
+
+<div id="msg" class="msg"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+  authDomain: "albay-steps.firebaseapp.com",
+  projectId: "albay-steps",
+  storageBucket: "albay-steps.firebasestorage.app",
+  messagingSenderId: "398122699141",
+  appId: "1:398122699141:web:787430d8d67c3451dedcec",
+  measurementId: "G-HXLNJ884EL"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.login = function(){
+  const m = document.getElementById("mail").value;
+  const p = document.getElementById("pass").value;
+  const msg = document.getElementById("msg");
+  msg.innerHTML = "Giriş yapılıyor...";
+
+  signInWithEmailAndPassword(auth, m, p)
+    .then(() => {
+      msg.innerHTML = "Giriş başarılı ✅";
+      msg.className = "msg ok";
+      // Giriş sonrası panel ekranı (birazdan yapacağız)
+      // Şimdilik başarılı olduğunda sadece mesaj görünsün.
+    })
+    .catch(() => {
+      msg.innerHTML = "E-posta veya şifre yanlış ❌";
+      msg.className = "msg err";
+    });
+}
+</script>
+
+</body>
+</html>
