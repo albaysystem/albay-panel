@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>ALBAY STEPS • Panel</title>
   <style>
-    body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;display:grid;place-items:center;height:100vh}
-    .card{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:22px;min-width:320px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;display:grid;place-items:center;min-height:100vh}
+    .card{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:22px;min-width:320px;max-width:520px;width:92%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35);margin:24px 0}
     h1{color:#e11d2e;margin:0 0 10px}
-    .kpi{display:flex;gap:12px;justify-content:center;margin:12px 0}
-    .kpi div{background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px}
-    button{margin-top:14px;padding:10px 14px;border-radius:10px;border:1px solid #2a2a2a;background:#b30000;color:#fff;font-weight:700}
-    .small{opacity:.7;font-size:13px}
+    .kpi{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+    .kpi div{background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px;min-width:140px}
+    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #2a2a2a;margin-top:10px;background:#161616;color:#fff}
+    button.primary{background:#b30000;font-weight:700;cursor:pointer}
+    .small{opacity:.75;font-size:13px}
+    .row{display:flex;gap:10px}
+    @media (max-width:420px){ .row{flex-direction:column} }
   </style>
 </head>
 <body>
@@ -24,17 +27,31 @@
       <div>Toplam Adım: <b id="totalSteps">0</b></div>
       <div>Puan: <b id="points">0</b></div>
     </div>
+    <p class="small" style="margin:10px 0 0">Çekilebilir (TL): <b id="availTL">0.00</b></p>
 
-    <button id="mockStep">+100 Adım Ekle (Test)</button><br/>
+    <button id="mockStep" class="primary">+100 Adım Ekle (Test)</button>
+
+    <br/><br/>
+    <h3 style="margin:0">💸 Para Çek</h3>
+    <input id="ibanInput" type="text" placeholder="IBAN veya Papara No"/>
+    <div class="row">
+      <input id="amountInput" type="number" placeholder="TL miktarı (boş bırakırsan maksimum)"/>
+      <button id="withdrawBtn" class="primary" style="min-width:160px">Talep Oluştur</button>
+    </div>
+    <p class="small">Talep oluşturulduğunda ödeme <b>manuel</b> yapılır. Otomatik para çıkışı <b>yoktur</b>.</p>
+
     <button id="signOut">Çıkış Yap</button>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc,
+      serverTimestamp, collection, addDoc
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-    // --- Senin Firebase bilgilerin ---
+    // —— Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
       authDomain: "albay-steps.firebaseapp.com",
@@ -44,21 +61,29 @@
       appId: "1:398122699141:web:787430d8d67c3451dedcec",
       measurementId: "G-HXLNJ884EL"
     };
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
+
+    // —— ÇEKİM AYARLARI (A seçimin)
+    const SETTINGS = {
+      MIN_PAYOUT_TL: 150,  // minimum çekim
+      POINT_TO_TL: 0.5,    // 1 puan = 0.5 TL  (1000 adım = 10 puan = 5 TL)
+      FEE_FIXED: 5,        // min 5 TL
+      FEE_PERCENT: 5,      // %5
+      RESERVE_PERCENT: 10  // %10 rezerv
+    };
 
     const whoEl = document.getElementById("who");
     const todayStepsEl = document.getElementById("todaySteps");
     const totalStepsEl = document.getElementById("totalSteps");
     const pointsEl = document.getElementById("points");
+    const availTLEl = document.getElementById("availTL");
     const mockBtn = document.getElementById("mockStep");
     const signOutBtn = document.getElementById("signOut");
 
     function todayId(){
-      const d = new Date(); const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
+      const d=new Date(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
       return `${d.getFullYear()}-${m}-${day}`;
     }
 
@@ -66,7 +91,7 @@
       const uref = doc(db, "users", email);
       const snap = await getDoc(uref);
       if(!snap.exists()){
-        await setDoc(uref, { email, role: "user", points: 0, totalSteps: 0, createdAt: serverTimestamp() });
+        await setDoc(uref, { email, role:"user", points:0, totalSteps:0, createdAt:serverTimestamp() });
       }
       return uref;
     }
@@ -74,35 +99,40 @@
     async function loadDashboard(email){
       whoEl.textContent = email;
       const uref = await ensureUserDoc(email);
+
+      // user ana verileri
       const usnap = await getDoc(uref);
       const udata = usnap.data() || {};
       totalStepsEl.textContent = udata.totalSteps ?? 0;
-      pointsEl.textContent = udata.points ?? 0;
+      pointsEl.textContent     = udata.points ?? 0;
+      const avail = (udata.points ?? 0) * SETTINGS.POINT_TO_TL;
+      availTLEl.textContent = avail.toFixed(2);
 
+      // bugünkü
       const dsRef = doc(db, "users", email, "dailyStats", todayId());
       const dsSnap = await getDoc(dsRef);
       todayStepsEl.textContent = dsSnap.exists() ? (dsSnap.data().steps ?? 0) : 0;
 
-      // Test butonu: 100 adım ekle (puan = adım/100)
+      // Test: 100 adım ekle
       mockBtn.onclick = async () => {
         const add = 100;
-        const dsS = await getDoc(dsRef);
-        const current = dsS.exists() ? (dsS.data().steps || 0) : 0;
+        const curDs = (await getDoc(dsRef)).data() || {};
+        const current = curDs.steps || 0;
         const newSteps = current + add;
-        const earned = Math.floor(newSteps / 100); // 100 adım = 1 puan (örnek)
-        await setDoc(dsRef, { steps: newSteps, earned, updatedAt: serverTimestamp() }, { merge:true });
+
+        await setDoc(dsRef, { steps:newSteps, updatedAt:serverTimestamp() }, { merge:true });
 
         const uS2 = await getDoc(uref);
         const uD2 = uS2.data() || {};
-        await updateDoc(uref, {
-          totalSteps: (uD2.totalSteps || 0) + add,
-          points: (uD2.points || 0) + Math.floor(add/100)
-        });
+        const newTotal  = (uD2.totalSteps || 0) + add;
+        const newPoints = (uD2.points || 0) + Math.floor(add/100); // 100 adım = 1 puan
+        await updateDoc(uref, { totalSteps:newTotal, points:newPoints });
 
         // ekranda güncelle
         todayStepsEl.textContent = newSteps;
-        totalStepsEl.textContent = (uD2.totalSteps || 0) + add;
-        pointsEl.textContent = (uD2.points || 0) + Math.floor(add/100);
+        totalStepsEl.textContent = newTotal;
+        pointsEl.textContent     = newPoints;
+        availTLEl.textContent    = (newPoints * SETTINGS.POINT_TO_TL).toFixed(2);
         alert("100 adım eklendi (test) ✅");
       };
     }
@@ -112,6 +142,49 @@
       loadDashboard(user.email).catch(e => alert("Panel yüklenemedi: " + e.message));
     });
 
+    // —— Para çekme talebi
+    const withdrawBtn = document.getElementById("withdrawBtn");
+    withdrawBtn.onclick = async () => {
+      const iban = document.getElementById("ibanInput").value.trim();
+      let amount = Number(document.getElementById("amountInput").value);
+      if(!iban){ alert("IBAN / Papara numarası gir."); return; }
+
+      const email = auth.currentUser.email;
+      const uref  = doc(db, "users", email);
+      const snap  = await getDoc(uref);
+      const points = (snap.exists() ? (snap.data().points || 0) : 0);
+      const availableTL = points * SETTINGS.POINT_TO_TL;
+
+      if(!amount || amount<=0){ amount = Math.floor(availableTL); } // boşsa max
+      if(amount > availableTL){ alert(`Maksimum: ${availableTL.toFixed(2)} TL`); return; }
+      if(amount < SETTINGS.MIN_PAYOUT_TL){ alert(`Minimum çekim limiti ${SETTINGS.MIN_PAYOUT_TL} TL.`); return; }
+
+      const fee = Math.max(SETTINGS.FEE_FIXED, amount * (SETTINGS.FEE_PERCENT/100));
+      const reserve = amount * (SETTINGS.RESERVE_PERCENT/100);
+      const net = amount - fee - reserve;
+      if(net <= 0){ alert("Net ödeme 0 TL'ye düştü. Tutarı artırın."); return; }
+
+      const ok = confirm(
+        `⛳ Talep Özeti\n`+
+        `Brüt: ${amount.toFixed(2)} TL\n`+
+        `Ücret: ${fee.toFixed(2)} TL\n`+
+        `Rezerv: ${reserve.toFixed(2)} TL\n`+
+        `NET ÖDENECEK: ${net.toFixed(2)} TL\n\n`+
+        `Talebi oluşturmak istiyor musun?`
+      );
+      if(!ok) return;
+
+      await addDoc(collection(db, "withdrawRequests"), {
+        email, iban, amount, fee, reserve, net,
+        status:"pending", createdAt:serverTimestamp()
+      });
+
+      alert("✅ Talep oluşturuldu! Onay bekleniyor.");
+      document.getElementById("ibanInput").value = "";
+      document.getElementById("amountInput").value = "";
+    };
+
+    // —— Çıkış
     signOutBtn.onclick = () => signOut(auth).then(()=>location.href="index.html");
   </script>
 </body>
