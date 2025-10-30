@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Adım Geçmişi</title>
+  <style>
+    body{background:#000;color:#eee;font-family:system-ui;margin:0;padding:20px;}
+    h1{text-align:center;color:#e11d2e;}
+    .item{background:#111;border:1px solid #333;padding:12px;margin-bottom:10px;border-radius:10px;}
+    .date{font-size:13px;color:#aaa;}
+  </style>
+</head>
+<body>
+
+<h1>Adım Geçmişi 👣</h1>
+<div id="list">Yükleniyor…</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+  authDomain: "albay-steps.firebaseapp.com",
+  projectId: "albay-steps",
+  storageBucket: "albay-steps.firebasestorage.app",
+  messagingSenderId: "398122699141",
+  appId: "1:398122699141:web:787430d8d67c3451dedcec",
+  measurementId: "G-HXLNJ884EL"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const list = document.getElementById("list");
+
+onAuthStateChanged(auth, async (user)=>{
+  if(!user) return location.href="index.html";
+
+  const stepsRef = collection(db,"users",user.email,"stepsLog");
+  const snap = await getDocs(stepsRef);
+  list.innerHTML = "";
+
+  snap.forEach(doc=>{
+    let d = doc.data();
+    list.innerHTML += `
+      <div class="item">
+        <div><b>+${d.amount} adım</b></div>
+        <div class="date">${d.time}</div>
+      </div>
+    `;
+  });
+});
+</script>
+</body>
+</html>
