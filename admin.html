@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ALBAY STEPS • Admin</title>
+<style>
+body{background:#0b0b0b;color:#eee;font-family:system-ui,Arial;margin:0;padding:20px}
+.card{background:#111;padding:18px;border-radius:10px;margin-bottom:12px;border:1px solid #333}
+button{padding:6px 12px;border-radius:8px;border:none;font-weight:700;cursor:pointer}
+.ok{background:#16a34a;color:white}
+.no{background:#b91c1c;color:white}
+h1{color:#e11d2e}
+.small{opacity:.7;font-size:12px}
+</style>
+</head>
+<body>
+
+<h1>ALBAY STEPS • Admin Talepleri</h1>
+<div id="list">Yükleniyor...</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, getDoc } 
+from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+  authDomain: "albay-steps.firebaseapp.com",
+  projectId: "albay-steps",
+  storageBucket: "albay-steps.firebasestorage.app",
+  messagingSenderId: "398122699141",
+  appId: "1:398122699141:web:787430d8d67c3451dedcec"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+onSnapshot(
+  query(collection(db, "withdrawRequests"), orderBy("createdAt","desc")),
+  async (snap)=>{
+    const list = document.getElementById("list");
+    if(snap.empty){ list.innerHTML="Henüz talep yok."; return; }
+
+    list.innerHTML="";
+    snap.forEach(async(docu)=>{
+      const d = docu.data();
+      const div = document.createElement("div");
+      div.className="card";
+      div.innerHTML = `
+        <b>${d.email}</b><br>
+        IBAN/Papara: ${d.iban}<br>
+        İstenen: ${d.amount} TL<br>
+        NET Ödenecek: ${d.net.toFixed(2)} TL<br>
+        Durum: <b>${d.status}</b><br><br>
+        <button class="ok">Ödendi</button>
+        <button class="no">Reddet</button>
+      `;
+
+      const ok = div.querySelector(".ok");
+      ok.onclick = async()=>{
+        // kullanıcı puan düş
+        const uref = doc(db,"users",d.email);
+        const snapU = await getDoc(uref);
+        if(snapU.exists()){
+          const points = snapU.data().points || 0;
+          const düş = Math.floor(d.amount / 0.5); // 0.5 = 1 puan TL değeri
+          await updateDoc(uref,{ points: points - düş });
+        }
+        await updateDoc(doc(db,"withdrawRequests",docu.id),{status:"paid"});
+        alert("✅ Ödendi olarak işaretlendi");
+      };
+
+      const no = div.querySelector(".no");
+      no.onclick = async()=>{
+        await updateDoc(doc(db,"withdrawRequests",docu.id),{status:"rejected"});
+        alert("❌ Talep reddedildi");
+      };
+
+      list.appendChild(div);
+    });
+  }
+);
+</script>
+</body>
+</html>
