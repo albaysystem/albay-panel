@@ -3,43 +3,43 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ALBAY | Admin</title>
+  <title>ALBAY STEPS • Admin</title>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyB8DQEXf2LlwA0wPQl0j72c-Z5mP02uRxTeaQfizoFo_llfMLcpM2H9pRdbppGIg9y/exec";
+  </script>
+
   <style>
-    body{font-family:system-ui;background:#0b0b0b;color:#eee;display:grid;place-items:center;height:100dvh;margin:0}
-    .card{background:#151515;padding:24px;border-radius:16px;max-width:460px;width:92%}
-    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0e0e0e;color:#eee}
-    button{margin-top:10px;cursor:pointer}
-    .out{margin-top:12px;font-weight:600}
+    body{font-family:system-ui;background:#0b0b0b;color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+    .card{background:#141414;padding:25px 28px;border-radius:18px;width:92%;max-width:380px;text-align:center;border:1px solid #2a2a2a}
+    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0e0e0e;color:#eee;margin-top:10px;font-size:15px}
+    button{background:#d40000;font-weight:700;cursor:pointer}
+    h1{color:#d40000;margin-bottom:18px}
+    #out{margin-top:14px;font-size:18px;font-weight:600}
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>Admin Panel – Bakiye Ekle</h2>
+    <h1>Admin Paneli</h1>
     <input id="email" placeholder="Kullanıcı e-posta" />
-    <input id="amount" placeholder="Eklenecek tutar (örn: 50)" type="number" />
-    <button onclick="add()">Ekle</button>
-    <div class="out" id="out"></div>
+    <input id="amount" placeholder="Eklenecek tutar (ör: 50)" type="number" />
+    <button onclick="add()">Bakiye Ekle</button>
+    <div id="out"></div>
   </div>
 
   <script>
-    const API = "https://script.google.com/macros/s/AKfycby-lHcAm7iqIw9SHikYlM6-ha2iBddU6CHnyWBoGANThXWtmkWqqhj_45hgTbwgin7b/exec";
     async function add(){
-      const email  = document.getElementById('email').value.trim();
-      const amount = document.getElementById('amount').value.trim();
-      if(!email || !amount){ return alert("E-posta ve tutar gir"); }
-      document.getElementById('out').textContent = "İşleniyor...";
-      try{
-        const body = new URLSearchParams({email, amount});
-        const res  = await fetch(API, {
-          method: "POST",
-          headers: {"Content-Type":"application/x-www-form-urlencoded"},
-          body
-        });
-        const text = await res.text(); // yeni bakiye dönüyor
-        document.getElementById('out').textContent = `Yeni bakiye: ${text}`;
-      }catch(e){
-        document.getElementById('out').textContent = "Hata: " + e.message;
-      }
+      const email = document.getElementById("email").value.trim();
+      const amount = document.getElementById("amount").value.trim();
+      if(!email || !amount) return alert("Email ve tutar gir");
+      document.getElementById("out").innerText = "İşleniyor...";
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: new URLSearchParams({email, amount})
+      });
+      const text = await res.text();
+      document.getElementById("out").innerText = "Yeni Bakiye: " + text + " ₺";
     }
   </script>
 </body>
