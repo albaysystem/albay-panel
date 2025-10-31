@@ -1,11 +1,52 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>ALBAY SYSTEM</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALBAY SYSTEM GİRİŞ</title>
+<style>
+body {
+    background: #000;
+    color: white;
+    text-align: center;
+    font-family: Arial;
+    margin-top: 100px;
+}
+input, button {
+    width: 80%;
+    padding: 12px;
+    margin: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+}
+button {
+    background: #8b0000;
+    color: white;
+    font-weight: bold;
+}
+</style>
 </head>
-<body style="background:black;color:white;text-align:center;font-family:sans-serif;">
-  <h1>ALBAY SYSTEM AKTİF ✅</h1>
-  <p>Hoş geldin komutan.</p>
+<body>
+
+<h2>ALBAY SYSTEM GİRİŞ PANELİ ✅</h2>
+<p>Komutan giriş yapınız.</p>
+
+<input id="user" type="text" placeholder="Kullanıcı adı">
+<input id="pass" type="password" placeholder="Şifre">
+<button onclick="login()">Giriş Yap</button>
+
+<script>
+function login() {
+    const u = document.getElementById("user").value;
+    const p = document.getElementById("pass").value;
+    if(u === "albay" && p === "Komutan123!") {
+        window.location.href = "admin.html";
+    } else {
+        alert("Hatalı giriş, tekrar deneyin!");
+    }
+}
+</script>
+
 </body>
 </html>
