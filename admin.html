@@ -4,43 +4,72 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ALBAY STEPS • Admin</title>
-
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyB8DQEXf2LlwA0wPQl0j72c-Z5mP02uRxTeaQfizoFo_llfMLcpM2H9pRdbppGIg9y/exec";
-  </script>
-
   <style>
-    body{font-family:system-ui;background:#0b0b0b;color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-    .card{background:#141414;padding:25px 28px;border-radius:18px;width:92%;max-width:380px;text-align:center;border:1px solid #2a2a2a}
-    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0e0e0e;color:#eee;margin-top:10px;font-size:15px}
-    button{background:#d40000;font-weight:700;cursor:pointer}
-    h1{color:#d40000;margin-bottom:18px}
-    #out{margin-top:14px;font-size:18px;font-weight:600}
+    :root{--bg:#0b0b0d;--card:#121317;--red:#d21414}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;background:var(--bg);color:#fff;display:grid;place-items:center;min-height:100dvh}
+    .card{width:min(92vw,560px);background:var(--card);padding:28px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);border:1px solid #1e1f26}
+    h1{margin:6px 0 18px;font-size:30px;text-align:center;color:var(--red)}
+    .row{display:flex;gap:12px}
+    label{display:block;font-size:13px;color:#bdbdbd;margin-top:10px}
+    input{width:100%;margin-top:6px;background:#0e0f13;color:#fff;border:1px solid #1f2027;padding:14px 16px;border-radius:12px;outline:none;font-size:16px}
+    button{width:100%;margin-top:16px;background:var(--red);border:none;color:#fff;padding:14px 16px;font-size:16px;border-radius:12px;cursor:pointer;font-weight:700}
+    .muted{margin-top:10px;color:#b4b4b4;font-size:14px;text-align:center}
+    .ok{color:#88ff9a}
+    .err{color:#ff8a8a}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Admin Paneli</h1>
-    <input id="email" placeholder="Kullanıcı e-posta" />
-    <input id="amount" placeholder="Eklenecek tutar (ör: 50)" type="number" />
-    <button onclick="add()">Bakiye Ekle</button>
-    <div id="out"></div>
+    <h1>ADMİN PANEL</h1>
+
+    <label for="email">Kullanıcı e-postası</label>
+    <input id="email" type="email" placeholder="ornek@mail.com" />
+
+    <label for="amount">Eklenecek miktar (pozitif ya da negatif)</label>
+    <input id="amount" type="number" step="0.01" placeholder="örn. 10" />
+
+    <button id="btn">Bakiye Güncelle</button>
+
+    <div id="status" class="muted">Hazır ✅</div>
   </div>
 
-  <script>
-    async function add(){
-      const email = document.getElementById("email").value.trim();
-      const amount = document.getElementById("amount").value.trim();
-      if(!email || !amount) return alert("Email ve tutar gir");
-      document.getElementById("out").innerText = "İşleniyor...";
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {"Content-Type":"application/x-www-form-urlencoded"},
-        body: new URLSearchParams({email, amount})
-      });
-      const text = await res.text();
-      document.getElementById("out").innerText = "Yeni Bakiye: " + text + " ₺";
-    }
-  </script>
+<script>
+const API = "https://script.google.com/macros/s/AKfycbyB8DQEXf2LlwA0wPQl0j72c-Z5mP02uRxTeaQfizoFo_llfMLcpM2H9pRdbppGIg9y/exec";
+
+const $ = (s)=>document.querySelector(s);
+const emailEl = $("#email");
+const amountEl = $("#amount");
+const btn = $("#btn");
+const statusEl = $("#status");
+
+btn.addEventListener("click", async () => {
+  const email = (emailEl.value || "").trim();
+  const amount = Number((amountEl.value || "0").trim());
+
+  if(!email){ emailEl.focus(); return; }
+  if(!isFinite(amount)){ amountEl.focus(); return; }
+
+  btn.disabled = true;
+  statusEl.textContent = "Gönderiliyor...";
+
+  try{
+    const body = new URLSearchParams({ email, amount: String(amount) }).toString();
+    const res = await fetch(API, {
+      method:"POST",
+      headers:{ "Content-Type":"application/x-www-form-urlencoded;charset=UTF-8" },
+      body
+    });
+    const text = await res.text(); // Apps Script yeni bakiyeyi döndürüyor
+
+    statusEl.innerHTML = `<span class="ok">Başarılı.</span> Yeni bakiye: <b>${text}</b>`;
+    amountEl.value = "";
+  }catch(e){
+    statusEl.innerHTML = `<span class="err">Hata:</span> Sunucuya ulaşılamadı.`;
+  }finally{
+    btn.disabled = false;
+  }
+});
+</script>
 </body>
 </html>
