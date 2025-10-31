@@ -1,33 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>ALBAY SYSTEM AKTİF ✅</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ALBAY | Bakiye Sorgu</title>
   <style>
-    body { 
-      background:black; 
-      color:white; 
-      text-align:center; 
-      font-family:Arial; 
-      margin-top:60px;
-    }
-    a button {
-      margin-top:30px;
-      padding:12px 28px;
-      background:red;
-      border:none;
-      color:white;
-      font-size:18px;
-      border-radius:8px;
-    }
+    body{font-family:system-ui;background:#0b0b0b;color:#eee;display:grid;place-items:center;height:100dvh;margin:0}
+    .card{background:#151515;padding:24px;border-radius:16px;max-width:420px;width:92%}
+    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0e0e0e;color:#eee}
+    button{margin-top:10px;cursor:pointer}
+    .out{margin-top:12px;font-weight:600}
   </style>
 </head>
 <body>
+  <div class="card">
+    <h2>Bakiyeni Öğren</h2>
+    <input id="email" placeholder="E-posta adresin" />
+    <button onclick="check()">Sorgula</button>
+    <div class="out" id="out"></div>
+  </div>
 
-<h1>ALBAY SYSTEM AKTİF ✅</h1>
-<p>Hoş geldin Komutan.</p>
-
-<a href="admin.html"><button>Panele Giriş Yap</button></a>
-
+  <script>
+    const API = "https://script.google.com/macros/s/AKfycby-lHcAm7iqIw9SHikYlM6-ha2iBddU6CHnyWBoGANThXWtmkWqqhj_45hgTbwgin7b/exec";
+    async function check(){
+      const email = document.getElementById('email').value.trim();
+      if(!email){ return alert("E-posta gir"); }
+      document.getElementById('out').textContent = "Sorgulanıyor...";
+      try{
+        const res = await fetch(`${API}?email=${encodeURIComponent(email)}`);
+        const text = await res.text();  // Apps Script string döndürüyor
+        document.getElementById('out').textContent = `Bakiyen: ${text}`;
+      }catch(e){
+        document.getElementById('out').textContent = "Hata: " + e.message;
+      }
+    }
+  </script>
 </body>
 </html>
