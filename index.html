@@ -3,36 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ALBAY | Bakiye Sorgu</title>
+  <title>ALBAY STEPS • Bakiye</title>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyB8DQEXf2LlwA0wPQl0j72c-Z5mP02uRxTeaQfizoFo_llfMLcpM2H9pRdbppGIg9y/exec";
+  </script>
+
   <style>
-    body{font-family:system-ui;background:#0b0b0b;color:#eee;display:grid;place-items:center;height:100dvh;margin:0}
-    .card{background:#151515;padding:24px;border-radius:16px;max-width:420px;width:92%}
-    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0e0e0e;color:#eee}
-    button{margin-top:10px;cursor:pointer}
-    .out{margin-top:12px;font-weight:600}
+    body{font-family:system-ui;background:#0b0b0b;color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+    .card{background:#141414;padding:25px 28px;border-radius:18px;width:92%;max-width:380px;text-align:center;border:1px solid #2a2a2a}
+    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0e0e0e;color:#eee;margin-top:10px;font-size:15px}
+    button{background:#d40000;font-weight:700;cursor:pointer}
+    h1{color:#d40000;margin-bottom:18px}
+    #out{margin-top:14px;font-size:18px;font-weight:600}
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>Bakiyeni Öğren</h2>
+    <h1>ALBAY STEPS</h1>
     <input id="email" placeholder="E-posta adresin" />
-    <button onclick="check()">Sorgula</button>
-    <div class="out" id="out"></div>
+    <button onclick="check()">Bakiyemi Göster</button>
+    <div id="out"></div>
   </div>
 
   <script>
-    const API = "https://script.google.com/macros/s/AKfycby-lHcAm7iqIw9SHikYlM6-ha2iBddU6CHnyWBoGANThXWtmkWqqhj_45hgTbwgin7b/exec";
     async function check(){
-      const email = document.getElementById('email').value.trim();
-      if(!email){ return alert("E-posta gir"); }
-      document.getElementById('out').textContent = "Sorgulanıyor...";
-      try{
-        const res = await fetch(`${API}?email=${encodeURIComponent(email)}`);
-        const text = await res.text();  // Apps Script string döndürüyor
-        document.getElementById('out').textContent = `Bakiyen: ${text}`;
-      }catch(e){
-        document.getElementById('out').textContent = "Hata: " + e.message;
-      }
+      const email = document.getElementById("email").value.trim();
+      if(!email) return alert("E-posta gir");
+      document.getElementById("out").innerText = "Kontrol ediliyor...";
+      const res = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
+      const text = await res.text();
+      document.getElementById("out").innerText = "Bakiyen: " + text + " ₺";
     }
   </script>
 </body>
