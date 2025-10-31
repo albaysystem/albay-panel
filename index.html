@@ -2,54 +2,62 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ALBAY STEPS</title>
 <style>
-  :root{--bg:#0b0b0b;--card:#141414;--red:#e01111;--txt:#f2f2f2;--muted:#b9b9b9;}
-  *{box-sizing:border-box;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial;}
-  body{margin:0;background:var(--bg);color:var(txt);}
-  .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px;}
-  .card{width:min(520px,92%);background:var(--card);border-radius:18px;padding:28px;box-shadow:0 14px 40px rgba(0,0,0,.4);}
-  .brand{color:var(--red);font-weight:800;font-size:34px;letter-spacing:.5px;text-align:center;margin:0 0 18px;}
-  label{display:block;color:var(--muted);font-size:14px;margin:12px 0 6px;}
-  input{width:100%;padding:14px 16px;background:#0f0f0f;border:1px solid #262626;border-radius:12px;color:var(--txt);outline:none}
-  button{width:100%;margin-top:16px;padding:14px 16px;border:0;border-radius:14px;background:var(--red);color:#fff;font-weight:800;font-size:16px;cursor:pointer}
-  .out{margin-top:18px;text-align:center;color:var(--muted);min-height:24px}
-  .big{font-size:28px;color:#fff;font-weight:800}
+  :root { --bg:#0c0c0c; --card:#151515; --red:#e31212; --text:#e8e8e8; }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial}
+  .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
+  .card{width:min(520px,100%);background:var(--card);border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.35);border:1px solid #222}
+  h1{margin:0 0 18px;font-size:38px;letter-spacing:.5px;color:var(--red);text-align:center}
+  .row{display:flex;gap:10px}
+  input{flex:1;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;color:#fafafa;font-size:16px;outline:none}
+  button{background:var(--red);color:#fff;border:0;border-radius:12px;padding:14px 16px;font-weight:700;cursor:pointer;font-size:16px}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .mt{margin-top:14px}
+  .out{margin-top:18px;background:#0f0f0f;border:1px solid #232323;border-radius:12px;padding:14px 16px;min-height:52px}
+  .muted{opacity:.8;font-size:14px}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1 class="brand">ALBAY STEPS</h1>
-
-      <label for="email">E-posta</label>
-      <input id="email" type="email" placeholder="ornek@mail.com" autocomplete="email" />
-
+<div class="wrap">
+  <div class="card">
+    <h1>ALBAY STEPS</h1>
+    <div class="row">
+      <input id="email" type="email" placeholder="e-posta adresiniz" />
       <button id="btn">Bakiyemi Göster</button>
-      <div id="out" class="out">—</div>
     </div>
+    <div class="mt muted">Örnek: muratalbay510@gmail.com</div>
+    <div id="out" class="out">Kontrol ediliyor...</div>
   </div>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbw30Z8TEJOyV_zB63qvhKSknjKzb8_fvReEU9O0nWL7A7wo1b5wKMMCcsP5AHK6NdK0/exec";
+const API = 'https://script.google.com/macros/s/AKfycbxpHWJ4e3AFg-1urWdBFrbQQMwACCae7I8mCAgw6zWxK0kqgLKFpKNIlCML76F9ys0p/exec';
+const emailEl = document.getElementById('email');
+const btn = document.getElementById('btn');
+const out = document.getElementById('out');
 
-const $ = (q)=>document.querySelector(q);
-const out = $("#out");
-$("#btn").onclick = async () => {
-  const email = $("#email").value.trim();
-  if(!email){ out.textContent = "E-posta giriniz."; return; }
-  out.textContent = "Kontrol ediliyor...";
+function show(msg){ out.textContent = msg; }
+
+async function fetchBalance(){
+  const email = emailEl.value.trim();
+  if(!email){ show('Lütfen e-posta gir.'); return; }
+  btn.disabled = true; show('Kontrol ediliyor...');
   try{
-    const r = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`, {method:"GET"});
-    const txt = await r.text();
-    // Beklenen: sadece sayı döner. Değilse 0 kabul.
-    const val = isNaN(parseFloat(txt)) ? 0 : parseFloat(txt);
-    out.innerHTML = `Bakiyeniz: <span class="big">${val}</span>`;
+    const r = await fetch(API + '?email=' + encodeURIComponent(email), { method:'GET', cache:'no-store' });
+    const txt = (await r.text() || '0').trim();
+    const val = isNaN(Number(txt)) ? 0 : Number(txt);
+    show(`📊 Bakiye: ${val}`);
   }catch(e){
-    out.textContent = "Bağlantı hatası. Yeniden deneyin.";
-  }
-};
+    show('Bağlantı hatası. Birazdan tekrar dene.');
+  }finally{ btn.disabled = false; }
+}
+
+btn.addEventListener('click', fetchBalance);
+
+// Sayfa açılınca otomatik denemek istersen (email kutusunda mail varsa):
+show('Kontrol ediliyor...');
 </script>
 </body>
 </html>
