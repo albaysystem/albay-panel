@@ -1,83 +1,94 @@
-<!doctype html>
+  <!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ALBAY STEPS • Admin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ALBAY Admin</title>
 <style>
-  :root{--bg:#0b0b0b;--card:#141414;--red:#e01111;--txt:#f2f2f2;--muted:#b9b9b9;--ok:#12c24a;}
-  *{box-sizing:border-box;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial;}
-  body{margin:0;background:var(--bg);color:var(--txt)}
-  .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
-  .card{width:min(620px,94%);background:var(--card);border-radius:18px;padding:28px;box-shadow:0 14px 40px rgba(0,0,0,.4)}
-  h1{margin:0 0 6px;font-size:26px}
-  .muted{color:var(--muted);margin:0 0 16px}
-  label{display:block;color:var(--muted);font-size:14px;margin:12px 0 6px}
-  input{width:100%;padding:14px 16px;background:#0f0f0f;border:1px solid #262626;border-radius:12px;color:var(--txt);outline:none}
-  .row{display:grid;grid-template-columns:1fr 160px;gap:10px}
-  button{width:100%;margin-top:16px;padding:13px 16px;border:0;border-radius:12px;background:var(--red);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
-  .ok{background:var(--ok)}
-  .out{margin-top:14px;min-height:22px;color:var(--muted)}
+  :root { --bg:#0b0b0b; --card:#151515; --red:#e31212; --text:#e8e8e8; }
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial}
+  .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
+  .card{width:min(640px,100%);background:var(--card);border:1px solid #222;border-radius:18px;padding:26px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  h1{margin:0 0 18px;font-size:30px;color:#fff}
+  .badge{color:#fff;background:var(--red);padding:6px 10px;border-radius:999px;font-weight:700;margin-left:8px}
+  .row{display:flex;gap:10px;margin-top:8px}
+  input{flex:1;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;color:#fafafa;font-size:16px;outline:none}
+  button{background:var(--red);color:#fff;border:0;border-radius:12px;padding:14px 16px;font-weight:700;cursor:pointer;font-size:16px}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .out{margin-top:16px;background:#0f0f0f;border:1px solid #232323;border-radius:12px;padding:14px 16px;min-height:52px}
+  .hr{height:1px;background:#242424;margin:18px 0}
+  .muted{opacity:.8;font-size:14px}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>ADMİN PANEL</h1>
-      <p class="muted">E-posta bakiyesi ekle/çıkar. (Çıkarmak için miktarı negatif gir: örn <b>-25</b>)</p>
+<div class="wrap">
+  <div class="card">
+    <h1>Admin Panel <span class="badge">ALBAY</span></h1>
 
-      <label for="email">E-posta</label>
-      <input id="email" type="email" placeholder="ornek@mail.com" autocomplete="email" />
-
-      <div class="row">
-        <div>
-          <label for="amount">Miktar</label>
-          <input id="amount" type="number" step="0.01" placeholder="örn: 50" />
-        </div>
-        <div>
-          <button id="add" class="ok">Bakiye Güncelle</button>
-        </div>
-      </div>
-
-      <button id="check">Bakiyeyi Kontrol Et</button>
-
-      <div id="out" class="out">—</div>
+    <div class="muted">E-posta ve eklenecek adım miktarını gir → Yükle</div>
+    <div class="row">
+      <input id="email" type="email" placeholder="kullanıcı e-postası">
+      <input id="amount" type="number" step="1" placeholder="eklenecek miktar (örn: 100)">
+      <button id="addBtn">Yükle</button>
     </div>
+    <div id="out" class="out">Hazır.</div>
+
+    <div class="hr"></div>
+
+    <div class="muted">Kontrol: Kullanıcının güncel bakiyesini kontrol etmek için e-posta gir → Göster</div>
+    <div class="row">
+      <input id="checkEmail" type="email" placeholder="kullanıcı e-postası">
+      <button id="checkBtn">Göster</button>
+    </div>
+    <div id="out2" class="out"></div>
   </div>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbw30Z8TEJOyV_zB63qvhKSknjKzb8_fvReEU9O0nWL7A7wo1b5wKMMCcsP5AHK6NdK0/exec";
-const $ = (q)=>document.querySelector(q);
-const out = $("#out");
+const API = 'https://script.google.com/macros/s/AKfycbxpHWJ4e3AFg-1urWdBFrbQQMwACCae7I8mCAgw6zWxK0kqgLKFpKNIlCML76F9ys0p/exec';
 
-$("#check").onclick = async ()=>{
-  const email = $("#email").value.trim();
-  if(!email){ out.textContent = "E-posta giriniz."; return; }
-  out.textContent = "Kontrol ediliyor...";
-  try{
-    const r = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
-    const txt = await r.text();
-    const val = isNaN(parseFloat(txt)) ? 0 : parseFloat(txt);
-    out.textContent = `Güncel bakiye: ${val}`;
-  }catch(e){ out.textContent = "Hata: Bağlanılamadı."; }
-};
+const emailEl = document.getElementById('email');
+const amountEl = document.getElementById('amount');
+const addBtn = document.getElementById('addBtn');
+const out = document.getElementById('out');
 
-$("#add").onclick = async ()=>{
-  const email = $("#email").value.trim();
-  const amount = parseFloat($("#amount").value);
-  if(!email){ out.textContent = "E-posta giriniz."; return; }
-  if(isNaN(amount)){ out.textContent = "Miktar giriniz."; return; }
-  out.textContent = "Güncelleniyor...";
+const checkEmailEl = document.getElementById('checkEmail');
+const checkBtn = document.getElementById('checkBtn');
+const out2 = document.getElementById('out2');
+
+function msg(el, t){ el.textContent = t; }
+
+async function addAmount(){
+  const email = emailEl.value.trim();
+  const amount = amountEl.value.trim();
+  if(!email || !amount){ msg(out, 'Lütfen e-posta ve miktar gir.'); return; }
+  addBtn.disabled = true; msg(out, 'Gönderiliyor...');
   try{
-    const form = new FormData();
-    form.append("email", email);
-    form.append("amount", amount);
-    const r = await fetch(API_URL, { method:"POST", body: form });
-    const txt = await r.text();
-    const val = isNaN(parseFloat(txt)) ? txt : parseFloat(txt);
-    out.textContent = `Yeni bakiye: ${val}`;
-  }catch(e){ out.textContent = "Hata: Güncelleme yapılamadı."; }
-};
+    const body = new URLSearchParams({ email, amount });
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+    const txt = (await r.text() || '').trim();
+    msg(out, '✅ Yüklendi. Yeni bakiye: ' + (txt || '?'));
+  }catch(e){
+    msg(out, '❌ Hata oluştu. Birazdan tekrar dene.');
+  }finally{ addBtn.disabled = false; }
+}
+
+async function checkBalance(){
+  const email = checkEmailEl.value.trim();
+  if(!email){ msg(out2, 'E-posta gir.'); return; }
+  checkBtn.disabled = true; msg(out2, 'Sorgulanıyor...');
+  try{
+    const r = await fetch(API + '?email=' + encodeURIComponent(email), { method:'GET', cache:'no-store' });
+    const txt = (await r.text()||'0').trim();
+    const val = isNaN(Number(txt)) ? 0 : Number(txt);
+    msg(out2, '📊 Bakiye: ' + val);
+  }catch(e){
+    msg(out2, 'Bağlantı hatası.');
+  }finally{ checkBtn.disabled = false; }
+}
+
+addBtn.addEventListener('click', addAmount);
+checkBtn.addEventListener('click', checkBalance);
 </script>
 </body>
 </html>
