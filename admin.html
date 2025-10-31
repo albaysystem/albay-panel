@@ -1,29 +1,82 @@
-<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>ADMİN PANEL</title></head><body>
-<h2>Çekim İstekleri</h2>
-<ul id="liste"></ul>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>ALBAY SİSTEM PANELİ</title>
+<style>
+body {
+  background: black;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+  padding-top: 40px;
+}
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBdopyZfXQ9NcTpAXYFvt3ti3UNxKaP1YM",
-  authDomain: "albay-system.firebaseapp.com",
-  projectId: "albay-system",
-  storageBucket: "albay-system.appspot.com",
-  messagingSenderId: "503510278441",
-  appId: "1:503510278441:web:b5b6048292cd3f85e7f8df"
-};
+h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+table {
+  margin: auto;
+  border-collapse: collapse;
+  width: 90%;
+  background: #222;
+}
 
-onSnapshot(collection(db, "withdraw_requests"), (snapshot) => {
-  const ul = document.getElementById("liste");
-  ul.innerHTML="";
-  snapshot.forEach(doc => {
-    const d = doc.data();
-    ul.innerHTML += `<li>${d.kullanici} - ${d.tarih}</li>`;
-  });
-});
-</script>
-</body></html>
+th, td {
+  border: 1px solid #555;
+  padding: 12px;
+  font-size: 17px;
+}
+
+th {
+  background: red;
+}
+
+button {
+  background: red;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+}
+</style>
+</head>
+<body>
+
+<h1>Çekim İstekleri</h1>
+<p>Aşağıda kullanıcıların gönderdiği çekim talepleri listelenir.</p>
+
+<table>
+<tr>
+<th>Kullanıcı</th>
+<th>Miktar</th>
+<th>IBAN</th>
+<th>Onay</th>
+</tr>
+
+<tr>
+<td>ÖRNEK KULLANICI</td>
+<td>500 TL</td>
+<td>TR00 0000 0000 0000</td>
+<td><button>Onayla ✅</button></td>
+</tr>
+
+<tr>
+<td>ÖRNEK KULLANICI 2</td>
+<td>1200 TL</td>
+<td>TR11 1111 1111 1111</td>
+<td><button>Onayla ✅</button></td>
+</tr>
+
+</table>
+
+<br><br>
+
+<a href="index.html"><button>Ana Sayfaya Dön</button></a>
+
+</body>
+</html>
