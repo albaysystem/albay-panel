@@ -1,8 +1,30 @@
-<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Giriş</title></head><body>
-<h2>Giriş</h2>
-<input id="username" placeholder="Kullanıcı adı"><br>
-<button onclick="login()">Giriş Yap</button>
-<script>
-function login(){ localStorage.setItem("username", document.getElementById('username').value); location.href='steps.html';}
-</script>
-</body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ALBAY SYSTEM</title>
+  <style>
+    :root { --bg:#000; --card:#111; --txt:#fff; --red:#b3001b; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial, sans-serif;display:grid;place-items:center;min-height:100vh}
+    .card{background:var(--card);width:min(92%,420px);padding:28px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.5);text-align:center}
+    h1{margin:0 0 10px;font-size:24px;letter-spacing:.5px}
+    p{opacity:.8;margin:0 0 22px}
+    .btn{display:block;width:100%;padding:14px 16px;margin:10px 0;border-radius:12px;border:1px solid #333;text-decoration:none;color:var(--txt);font-weight:700}
+    .btn-primary{background:var(--red);border-color:var(--red)}
+    .btn-outline{background:transparent}
+    .small{font-size:12px;opacity:.6;margin-top:14px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>ALBAY SYSTEM AKTİF ✅</h1>
+    <p>Hoş geldin komutan.</p>
+
+    <a class="btn btn-primary" href="steps.html">➡️ Kurulum / Steps</a>
+    <a class="btn btn-outline" href="admin.html">🔒 Admin Panel</a>
+
+    <div class="small">© ALBAY • Dark Red & Black</div>
+  </div>
+</body>
+</html>
