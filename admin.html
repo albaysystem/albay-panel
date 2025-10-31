@@ -1,51 +1,29 @@
-<!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8">
-<title>ALBAY STEPS • Admin</title>
-<style>
-body{background:#000;color:#fff;font-family:Arial;padding:20px}
-.card{background:#111;padding:15px;border-radius:12px;margin-bottom:12px}
-button{padding:8px 12px;border:none;background:#e11d2e;color:#fff;border-radius:8px;margin-top:8px}
-</style>
-</head>
-<body>
+<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>ADMİN PANEL</title></head><body>
 <h2>Çekim İstekleri</h2>
-<div id="list">Yükleniyor...</div>
-
+<ul id="liste"></ul>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-  authDomain:"albay-steps.firebaseapp.com",
-  projectId:"albay-steps"
+  apiKey: "AIzaSyBdopyZfXQ9NcTpAXYFvt3ti3UNxKaP1YM",
+  authDomain: "albay-system.firebaseapp.com",
+  projectId: "albay-system",
+  storageBucket: "albay-system.appspot.com",
+  messagingSenderId: "503510278441",
+  appId: "1:503510278441:web:b5b6048292cd3f85e7f8df"
 };
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
 
-async function load(){
- const q=await getDocs(collection(db,"withdrawRequests"));
- let html="";
- q.forEach(r=>{
-  const d=r.data();
-  html+=`
-   <div class="card">
-     <b>${d.email}</b><br>
-     Tutar: ${d.amount}₺<br>
-     IBAN: ${d.iban}<br>
-     <button onclick="confirmReq('${r.id}')">Onayla</button>
-   </div>`;
- });
- document.getElementById("list").innerHTML=html||"İstek yok";
-}
-window.confirmReq=async function(id){
- await deleteDoc(doc(db,"withdrawRequests",id));
- alert("Onaylandı ✅ Bankadan elle gönder.");
- load();
-}
-load();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+onSnapshot(collection(db, "withdraw_requests"), (snapshot) => {
+  const ul = document.getElementById("liste");
+  ul.innerHTML="";
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    ul.innerHTML += `<li>${d.kullanici} - ${d.tarih}</li>`;
+  });
+});
 </script>
-</body>
-</html>
+</body></html>

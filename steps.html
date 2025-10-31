@@ -1,157 +1,29 @@
+<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Çekim</title></head><body>
+<h2>Çekim Talebi</h2>
+<button id="withdrawBtn">Çekim Talebi Gönder</button>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-<!doctype html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ALBAY STEPS • Adım Geçmişi</title>
-  <style>
-    :root{--bg:#0b0b0b;--card:#111;--muted:#aaa;--line:#242424;--red:#e11d2e;}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:#eee;font-family:system-ui,Arial}
-    .wrap{max-width:840px;margin:24px auto;padding:16px}
-    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .title{font-size:22px;font-weight:800;color:#fff}
-    .back{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#b30000;color:#fff;font-weight:700;text-decoration:none}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
-    .row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed var(--line);padding:10px 4px}
-    .row:last-child{border-bottom:none}
-    .when{font-size:13px;color:var(--muted)}
-    .amount{font-weight:800}
-    .section{margin-top:18px}
-    .section h3{margin:0 0 8px;font-size:14px;color:#ddd;letter-spacing:.3px}
-    .kpi{display:flex;gap:10px;margin-top:8px}
-    .kpi div{background:#161616;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-    .muted{color:var(--muted)}
-    .center{display:grid;place-items:center}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="top">
-      <div class="title">Adım Geçmişi</div>
-      <a class="back" href="panel.html">Panele Dön</a>
-    </div>
+const firebaseConfig = {
+  apiKey: "AIzaSyBdopyZfXQ9NcTpAXYFvt3ti3UNxKaP1YM",
+  authDomain: "albay-system.firebaseapp.com",
+  projectId: "albay-system",
+  storageBucket: "albay-system.appspot.com",
+  messagingSenderId: "503510278441",
+  appId: "1:503510278441:web:b5b6048292cd3f85e7f8df"
+};
 
-    <div id="who" class="muted" style="margin-bottom:8px">Kullanıcı yükleniyor…</div>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    <div class="kpi">
-      <div>Bugün Toplam: <b id="sumToday">0</b></div>
-      <div>Dün Toplam: <b id="sumYest">0</b></div>
-      <div>Genel Puan: <b id="sumPoints">0</b></div>
-    </div>
-
-    <div id="todayBox" class="section">
-      <h3>Bugün</h3>
-      <div id="todayList" class="card"></div>
-    </div>
-
-    <div id="yestBox" class="section">
-      <h3>Dün</h3>
-      <div id="yestList" class="card"></div>
-    </div>
-
-    <div id="oldBox" class="section">
-      <h3>Daha Eskiler</h3>
-      <div id="oldList" class="card"></div>
-    </div>
-
-    <div id="empty" class="center muted" style="display:none;margin-top:24px;">Henüz kayıt yok.</div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
-    // — Aynı config —
-    const firebaseConfig = {
-      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-      authDomain: "albay-steps.firebaseapp.com",
-      projectId: "albay-steps",
-      storageBucket: "albay-steps.firebasestorage.app",
-      messagingSenderId: "398122699141",
-      appId: "1:398122699141:web:787430d8d67c3451dedcec",
-      measurementId: "G-HXLNJ884EL"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-
-    const who  = document.getElementById("who");
-    const sumTodayEl = document.getElementById("sumToday");
-    const sumYestEl  = document.getElementById("sumYest");
-    const sumPtsEl   = document.getElementById("sumPoints");
-
-    const todayList = document.getElementById("todayList");
-    const yestList  = document.getElementById("yestList");
-    const oldList   = document.getElementById("oldList");
-    const emptyBox  = document.getElementById("empty");
-
-    // Yardımcılar
-    const fmt = (d)=> d.toLocaleString("tr-TR", {hour:"2-digit", minute:"2-digit"}) + " • " + d.toLocaleDateString("tr-TR");
-    const isSameDay = (a,b)=> a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-
-    function groupToBox(date){
-      const now = new Date();
-      const yest = new Date(now); yest.setDate(now.getDate()-1);
-      if (isSameDay(date, now)) return "today";
-      if (isSameDay(date, yest)) return "yest";
-      return "old";
-    }
-
-    function addRow(container, whenText, amount){
-      const row = document.createElement("div"); row.className="row";
-      row.innerHTML = `<div><div class="when">${whenText}</div></div>
-                       <div class="amount">+${amount} adım</div>`;
-      container.appendChild(row);
-    }
-
-    onAuthStateChanged(auth, async (user)=>{
-      if(!user){ location.href="index.html"; return; }
-      const email = user.email;
-      who.textContent = email;
-
-      // Hem "time" (serverTimestamp) hem "timeRaw" (Date) destekle
-      let snapshots;
-      try {
-        const q1 = query(collection(db,"users",email,"stepsLog"), orderBy("time","desc"));
-        snapshots = await getDocs(q1);
-      } catch (e) {
-        const q2 = query(collection(db,"users",email,"stepsLog"), orderBy("timeRaw","desc"));
-        snapshots = await getDocs(q2);
-      }
-
-      let totalToday = 0, totalYest = 0, totalPoints = 0;
-      let hasAny = false;
-
-      snapshots.forEach(docSnap=>{
-        const data = docSnap.data() || {};
-        const amount = Number(data.amount || 0);
-        // Firestore Timestamp veya JS Date olabilir:
-        const ts = data.time?.toDate ? data.time.toDate() : (data.timeRaw ? new Date(data.timeRaw.seconds ? data.timeRaw.seconds*1000 : data.timeRaw) : null);
-        if (!ts) return;
-        hasAny = true;
-
-        const whenText = fmt(ts);
-        const bucket = groupToBox(ts);
-
-        if (bucket==="today"){ addRow(todayList, whenText, amount); totalToday += amount; }
-        else if (bucket==="yest"){ addRow(yestList, whenText, amount); totalYest += amount; }
-        else { addRow(oldList, whenText, amount); }
-
-        totalPoints += Math.floor(amount/100);
-      });
-
-      sumTodayEl.textContent = totalToday;
-      sumYestEl.textContent  = totalYest;
-      sumPtsEl.textContent   = totalPoints;
-
-      if(!hasAny){
-        emptyBox.style.display="block";
-        todayList.innerHTML = ""; yestList.innerHTML=""; oldList.innerHTML="";
-      }
-    });
-  </script>
-</body>
-</html>
+document.getElementById("withdrawBtn").addEventListener("click", async function() {
+  const isim = localStorage.getItem("username") || "Bilinmiyor";
+  await addDoc(collection(db, "withdraw_requests"), {
+    kullanici: isim,
+    tarih: new Date().toLocaleString()
+  });
+  alert("✅ Çekim talebi gönderildi!");
+});
+</script>
+</body></html>
