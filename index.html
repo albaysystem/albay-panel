@@ -1,54 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALBAY STEPS</title>
-<link rel="manifest" href="https://albaysystem.github.io/manifest.json">
+<link rel="manifest" href="manifest.json">
 <style>
-  :root { --kirmizi:#e10600; --siyah:#0d0d0d; --gri:#1a1a1a; --metin:#fff; }
-  body{margin:0;background:#000;color:var(--metin);font-family:system-ui,Segoe UI,Roboto,Arial}
-  .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
-  .card{width:min(480px,92vw);background:var(--gri);border-radius:18px;padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
-  h1{margin:4px 0 16px;font-size:34px;letter-spacing:.5px;color:#ff2a2a;text-align:center}
-  label{font-size:14px;opacity:.9}
-  input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #333;background:#0f0f0f;color:#fff;margin:8px 0 14px}
-  button{width:100%;padding:14px 16px;border:0;border-radius:12px;background:var(--kirmizi);color:#fff;font-weight:700;font-size:16px}
-  .msg{margin-top:14px;min-height:22px;text-align:center;opacity:.95}
-  .ok{color:#78ff86}.err{color:#ff9b9b}
+body { background:#000; color:white; font-family:Arial; text-align:center; padding-top:60px; }
+input { width:80%; padding:12px; border-radius:8px; border:none; margin-bottom:15px; font-size:17px; }
+button { background:#c40000; border:none; padding:14px 22px; color:white; border-radius:8px;
+font-size:18px; font-weight:bold; cursor:pointer; }
+.container { background:#111; width:90%; padding:35px; margin:auto; border-radius:14px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <h1>ALBAY STEPS</h1>
-    <label for="email">E-posta</label>
-    <input id="email" type="email" placeholder="ornek@eposta.com" autocomplete="email" />
-    <button id="btn">Bakiyemi Göster</button>
-    <div id="out" class="msg"></div>
-  </div>
+<div class="container">
+<h1>ALBAY STEPS</h1>
+<input type="email" id="email" placeholder="E-posta adresin" />
+<button onclick="checkBalance()">Bakiyemi Göster</button>
+<p id="result"></p>
 </div>
-<script>
-  const API = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
 
-  const $ = id => document.getElementById(id);
-  $("btn").addEventListener("click", async () => {
-    const email = $("email").value.trim();
-    const out = $("out");
-    if(!email){ out.textContent="E-posta gir."; out.className="msg err"; return; }
-    out.textContent="Kontrol ediliyor…"; out.className="msg";
-    try{
-      const r = await fetch(`${API}?email=${encodeURIComponent(email)}`, { method:"GET" });
-      if(!r.ok) throw new Error("Sunucu hatası");
-      const text = await r.text(); // Apps Script ContentService string döndürür
-      const balance = Number(text || 0);
-      out.innerHTML = `Bakiye: <b>${balance.toLocaleString("tr-TR")}</b>`; 
-      out.className="msg ok";
-    }catch(e){
-      out.textContent="Bağlantı hatası. Birazdan tekrar dene."; 
-      out.className="msg err";
-    }
-  });
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
+
+function checkBalance(){
+    let email = document.getElementById("email").value.trim();
+    if(!email) return alert("Email yaz Kardeşim 😉");
+    fetch(API_URL + "?email=" + email)
+    .then(res => res.text())
+    .then(data => {
+        document.getElementById("result").innerHTML = "Bakiyen: <b>" + data + " ₺</b>";
+    })
+    .catch(()=> document.getElementById("result").innerHTML = "Bağlantı hatası tekrar dene.");
+}
 </script>
 </body>
 </html>
