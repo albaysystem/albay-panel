@@ -1,80 +1,108 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>ALBAY STEPS</title>
-<style>
-body {
-  background: #000;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 40px;
-}
-input, button {
-  width: 80%;
-  padding: 14px;
-  border-radius: 10px;
-  border: none;
-  margin-top: 10px;
-}
-button {
-  background: #ff3131;
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
-}
-.balance-box {
-  margin-top: 25px;
-  font-size: 20px;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ALBAY STEPS • Giriş</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root{--kirmizi:#e10600;--bg:#0b0b0b;--card:#141414;--text:#fff;--muted:#aaa}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Inter,Arial}
+    .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
+    .card{width:min(480px,92vw);background:var(--card);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{margin:6px 0 16px;font-size:28px;color:#ff2a2a;text-align:center;letter-spacing:.4px}
+    label{font-size:13px;color:var(--muted)}
+    input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #2a2a2a;background:#0f0f0f;color:#fff;margin:8px 0 12px}
+    button{width:100%;padding:14px 16px;border:0;border-radius:12px;background:var(--kirmizi);color:#fff;font-weight:700;font-size:16px}
+    .row{display:grid;grid-template-columns:1fr;gap:10px}
+    .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
+    #recaptcha-container{margin-top:10px;display:grid;place-items:center}
+    .ok{color:#78ff86}.err{color:#ff9b9b}
+  </style>
 </head>
-
 <body>
-<h1>ALBAY STEPS</h1>
+  <div class="wrap">
+    <div class="card">
+      <h1>ALBAY STEPS</h1>
+      <div class="row">
+        <label for="phone">Telefon Numarası (örn: +90XXXXXXXXXX)</label>
+        <input id="phone" type="tel" placeholder="+90..." autocomplete="tel" />
+        <div id="recaptcha-container"></div>
+        <button id="sendCode">SMS Kodu Gönder</button>
 
-<input type="email" id="email" placeholder="Email adresini yaz">
-<button id="checkBalance">Bakiyemi Göster</button>
+        <label for="code" style="margin-top:8px">Gelen SMS Kodu</label>
+        <input id="code" type="text" placeholder="123456" />
+        <button id="verifyCode">Giriş Yap</button>
+        <div id="msg" class="small"></div>
+      </div>
+    </div>
+  </div>
 
-<div class="balance-box" id="balanceText">Bakiyen: 0 ₺</div>
+  <!-- Firebase SDK (v10 modules) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-<button id="withdrawBtn" style="margin-top:30px;">Para Çek</button>
+    // 🔴 Firebase config (senin projenden)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+      authDomain: "albay-steps.firebaseapp.com",
+      projectId: "albay-steps",
+      storageBucket: "albay-steps.firebasestorage.app",
+      messagingSenderId: "398122699141",
+      appId: "1:398122699141:web:787430d8d67c3451dedcec",
+      measurementId: "G-HXLNJ884EL"
+    };
 
-<div id="withdrawForm" style="display:none; margin-top:20px;">
-  <input type="text" id="iban" placeholder="IBAN TR...">
-  <input type="number" id="withdrawAmount" placeholder="Çekilecek Tutar">
-  <button id="sendWithdraw" style="background:#fff; color:#000;">Talep Gönder</button>
-</div>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec"; // Apps Script API (hazır)
 
-<script>
-const API = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    auth.languageCode = 'tr';
 
-document.getElementById("checkBalance").onclick = () => {
-  const email = document.getElementById("email").value;
-  fetch(API + `?email=${email}`)
-    .then(r => r.text())
-    .then(balance => {
-      document.getElementById("balanceText").innerHTML = "Bakiyen: " + balance + " ₺";
+    const $ = (id)=>document.getElementById(id);
+    let confResult = null;
+
+    // reCAPTCHA (Firebase otomatik görünür)
+    const recaptcha = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'normal' });
+
+    // Eğer zaten girişliyse direkt panele al
+    onAuthStateChanged(auth, (user)=>{
+      if(user){
+        const phone = user.phoneNumber || '';
+        localStorage.setItem('albay_phone', phone);
+        location.href = 'panel.html';
+      }
     });
-};
 
-document.getElementById("withdrawBtn").onclick = () => {
-  document.getElementById("withdrawForm").style.display = "block";
-};
+    $('sendCode').onclick = async () => {
+      const phone = $('phone').value.trim();
+      $('msg').textContent = '';
+      if(!phone.startsWith('+90')){
+        $('msg').textContent = 'Lütfen +90 ile başlayan formatta gir.'; $('msg').className='small err'; return;
+      }
+      try{
+        confResult = await signInWithPhoneNumber(auth, phone, recaptcha);
+        $('msg').textContent = 'SMS gönderildi. Kodu giriniz.'; $('msg').className='small ok';
+      }catch(e){ $('msg').textContent = 'Gönderilemedi: ' + e.message; $('msg').className='small err'; }
+    };
 
-document.getElementById("sendWithdraw").onclick = () => {
-  const email = document.getElementById("email").value;
-  const iban = document.getElementById("iban").value;
-  const amount = document.getElementById("withdrawAmount").value;
+    $('verifyCode').onclick = async () => {
+      const code = $('code').value.trim();
+      if(!confResult){ $('msg').textContent='Önce SMS kodu gönderiniz.'; $('msg').className='small err'; return; }
+      try{
+        const cred = await confResult.confirm(code);
+        const phone = cred.user.phoneNumber;
+        localStorage.setItem('albay_phone', phone);
+        // ilk girişte kaydı garanti altına almak için 0 bakiye isteği
+        await fetch(`${API_URL}?email=${encodeURIComponent(phone)}`);
+        location.href = 'panel.html';
+      }catch(e){ $('msg').textContent = 'Kod doğrulanamadı: ' + e.message; $('msg').className='small err'; }
+    };
 
-  fetch(API + `?withdraw=1&email=${email}&iban=${iban}&amount=${amount}`)
-    .then(r => r.text())
-    .then(() => {
-      alert("✅ Talebin gönderildi. Onay bekleniyor.");
-    });
-};
-</script>
-
+    // PWA service worker
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+  </script>
 </body>
 </html>
