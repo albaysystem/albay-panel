@@ -1,39 +1,80 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALBAY STEPS</title>
-<link rel="manifest" href="manifest.json">
 <style>
-body { background:#000; color:white; font-family:Arial; text-align:center; padding-top:60px; }
-input { width:80%; padding:12px; border-radius:8px; border:none; margin-bottom:15px; font-size:17px; }
-button { background:#c40000; border:none; padding:14px 22px; color:white; border-radius:8px;
-font-size:18px; font-weight:bold; cursor:pointer; }
-.container { background:#111; width:90%; padding:35px; margin:auto; border-radius:14px; }
+body {
+  background: #000;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 40px;
+}
+input, button {
+  width: 80%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 10px;
+}
+button {
+  background: #ff3131;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+}
+.balance-box {
+  margin-top: 25px;
+  font-size: 20px;
+}
 </style>
 </head>
+
 <body>
-<div class="container">
 <h1>ALBAY STEPS</h1>
-<input type="email" id="email" placeholder="E-posta adresin" />
-<button onclick="checkBalance()">Bakiyemi Göster</button>
-<p id="result"></p>
+
+<input type="email" id="email" placeholder="Email adresini yaz">
+<button id="checkBalance">Bakiyemi Göster</button>
+
+<div class="balance-box" id="balanceText">Bakiyen: 0 ₺</div>
+
+<button id="withdrawBtn" style="margin-top:30px;">Para Çek</button>
+
+<div id="withdrawForm" style="display:none; margin-top:20px;">
+  <input type="text" id="iban" placeholder="IBAN TR...">
+  <input type="number" id="withdrawAmount" placeholder="Çekilecek Tutar">
+  <button id="sendWithdraw" style="background:#fff; color:#000;">Talep Gönder</button>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
+const API = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
 
-function checkBalance(){
-    let email = document.getElementById("email").value.trim();
-    if(!email) return alert("Email yaz Kardeşim 😉");
-    fetch(API_URL + "?email=" + email)
-    .then(res => res.text())
-    .then(data => {
-        document.getElementById("result").innerHTML = "Bakiyen: <b>" + data + " ₺</b>";
-    })
-    .catch(()=> document.getElementById("result").innerHTML = "Bağlantı hatası tekrar dene.");
-}
+document.getElementById("checkBalance").onclick = () => {
+  const email = document.getElementById("email").value;
+  fetch(API + `?email=${email}`)
+    .then(r => r.text())
+    .then(balance => {
+      document.getElementById("balanceText").innerHTML = "Bakiyen: " + balance + " ₺";
+    });
+};
+
+document.getElementById("withdrawBtn").onclick = () => {
+  document.getElementById("withdrawForm").style.display = "block";
+};
+
+document.getElementById("sendWithdraw").onclick = () => {
+  const email = document.getElementById("email").value;
+  const iban = document.getElementById("iban").value;
+  const amount = document.getElementById("withdrawAmount").value;
+
+  fetch(API + `?withdraw=1&email=${email}&iban=${iban}&amount=${amount}`)
+    .then(r => r.text())
+    .then(() => {
+      alert("✅ Talebin gönderildi. Onay bekleniyor.");
+    });
+};
 </script>
+
 </body>
 </html>
