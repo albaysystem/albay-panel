@@ -1,63 +1,90 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALBAY STEPS</title>
+
+<!-- Manifest (Hazır ✅) -->
+<link rel="manifest" href="https://albaysystem.github.io/manifest.json">
+
+<!-- Stil -->
 <style>
-  :root { --bg:#0c0c0c; --card:#151515; --red:#e31212; --text:#e8e8e8; }
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial}
-  .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
-  .card{width:min(520px,100%);background:var(--card);border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.35);border:1px solid #222}
-  h1{margin:0 0 18px;font-size:38px;letter-spacing:.5px;color:var(--red);text-align:center}
-  .row{display:flex;gap:10px}
-  input{flex:1;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;color:#fafafa;font-size:16px;outline:none}
-  button{background:var(--red);color:#fff;border:0;border-radius:12px;padding:14px 16px;font-weight:700;cursor:pointer;font-size:16px}
-  button:disabled{opacity:.6;cursor:not-allowed}
-  .mt{margin-top:14px}
-  .out{margin-top:18px;background:#0f0f0f;border:1px solid #232323;border-radius:12px;padding:14px 16px;min-height:52px}
-  .muted{opacity:.8;font-size:14px}
+body {
+  background: #000;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+}
+.container {
+  background: #111;
+  padding: 25px;
+  border-radius: 15px;
+  width: 85%;
+  max-width: 380px;
+}
+h1 {
+  color: red;
+  margin-bottom: 25px;
+  font-size: 32px;
+}
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+button {
+  width: 100%;
+  background: red;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+#status {
+  margin-top: 18px;
+  color: #bbb;
+  font-size: 16px;
+}
 </style>
+
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <h1>ALBAY STEPS</h1>
-    <div class="row">
-      <input id="email" type="email" placeholder="e-posta adresiniz" />
-      <button id="btn">Bakiyemi Göster</button>
-    </div>
-    <div class="mt muted">Örnek: muratalbay510@gmail.com</div>
-    <div id="out" class="out">Kontrol ediliyor...</div>
-  </div>
+
+<div class="container">
+  <h1>ALBAY STEPS</h1>
+
+  <input type="email" id="email" placeholder="E-posta">
+  <button onclick="checkBalance()">Bakiyemi Göster</button>
+  <div id="status">...</div>
 </div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbxpHWJ4e3AFg-1urWdBFrbQQMwACCae7I8mCAgw6zWxK0kqgLKFpKNIlCML76F9ys0p/exec';
-const emailEl = document.getElementById('email');
-const btn = document.getElementById('btn');
-const out = document.getElementById('out');
+// ✅ Google Script URL'in
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpHWJ4e3AFg-1urWdBFrbQQMwACCae7I8mCAgw6zWxK0kqgLKFpKNIlCML76F9ys0p/exec";
 
-function show(msg){ out.textContent = msg; }
+function checkBalance(){
+  const email = document.getElementById("email").value.trim();
+  document.getElementById("status").innerText = "Kontrol ediliyor...";
 
-async function fetchBalance(){
-  const email = emailEl.value.trim();
-  if(!email){ show('Lütfen e-posta gir.'); return; }
-  btn.disabled = true; show('Kontrol ediliyor...');
-  try{
-    const r = await fetch(API + '?email=' + encodeURIComponent(email), { method:'GET', cache:'no-store' });
-    const txt = (await r.text() || '0').trim();
-    const val = isNaN(Number(txt)) ? 0 : Number(txt);
-    show(`📊 Bakiye: ${val}`);
-  }catch(e){
-    show('Bağlantı hatası. Birazdan tekrar dene.');
-  }finally{ btn.disabled = false; }
+  fetch(`${SCRIPT_URL}?email=${email}`)
+  .then(res => res.text())
+  .then(balance => {
+    document.getElementById("status").innerText = "Bakiye: " + balance + " ALBAY COIN";
+  })
+  .catch(err => {
+    document.getElementById("status").innerText = "Bağlantı hatası. Yeniden deneyin.";
+  });
 }
-
-btn.addEventListener('click', fetchBalance);
-
-// Sayfa açılınca otomatik denemek istersen (email kutusunda mail varsa):
-show('Kontrol ediliyor...');
 </script>
+
 </body>
 </html>
