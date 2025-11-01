@@ -1,74 +1,48 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ALBAY ADMIN</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALBAY PANEL - Admin</title>
 <style>
-  :root { --kirmizi:#e10600; --gri:#151515; --metin:#fff }
-  body{margin:0;background:#000;color:var(--metin);font-family:system-ui,Segoe UI,Roboto,Arial}
-  .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
-  .card{width:min(520px,94vw);background:var(--gri);border-radius:18px;padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
-  h1{margin:4px 0 16px;font-size:28px;color:#ff2a2a;text-align:center}
-  label{font-size:13px;opacity:.9}
-  input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #333;background:#0f0f0f;color:#fff;margin:6px 0 12px}
-  button{width:100%;padding:14px 16px;border:0;border-radius:12px;background:var(--kirmizi);color:#fff;font-weight:700;font-size:16px}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .msg{margin-top:12px;min-height:22px;text-align:center}
-  .ok{color:#78ff86}.err{color:#ff9b9b}
+body { background:#000; color:white; font-family:Arial; text-align:center; padding-top:60px; }
+input { width:80%; padding:12px; border-radius:8px; border:none; margin-bottom:15px; font-size:17px; }
+button { background:#c40000; border:none; padding:14px 22px; color:white; border-radius:8px;
+font-size:18px; font-weight:bold; cursor:pointer; }
+.container { background:#111; width:90%; padding:35px; margin:auto; border-radius:14px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <h1>ALBAY ADMIN</h1>
-    <label for="email">Kullanıcı e-posta</label>
-    <input id="email" type="email" placeholder="ornek@eposta.com" />
-    <div class="row">
-      <div>
-        <label for="islem">İşlem</label>
-        <select id="islem">
-          <option value="add">Ekle (+)</option>
-          <option value="sub">Düş (-)</option>
-        </select>
-      </div>
-      <div>
-        <label for="tutar">Tutar</label>
-        <input id="tutar" type="number" step="0.01" placeholder="0" />
-      </div>
-    </div>
-    <button id="btn">Uygula</button>
-    <div id="out" class="msg"></div>
-  </div>
+
+<div class="container">
+<h1>ALBAY PANEL ⚡</h1>
+
+<input type="email" id="email" placeholder="Kullanıcı e-posta">
+<input type="number" id="amount" placeholder="Bakiye ekle/çıkar (örn 10, -5)">
+
+<button onclick="updateBalance()">Uygula</button>
+
+<p id="status"></p>
 </div>
+
 <script>
-  const API = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
-  const $ = id => document.getElementById(id);
+const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
 
-  $("btn").addEventListener("click", async () => {
-    const email = $("email").value.trim();
-    const op = $("islem").value;
-    const amount = Number($("tutar").value);
-    const out = $("out");
-    if(!email || isNaN(amount)){ out.textContent="E-posta ve tutar gerekli."; out.className="msg err"; return; }
+function updateBalance(){
+    let email = document.getElementById("email").value.trim();
+    let amount = document.getElementById("amount").value.trim();
+    if(!email || !amount) return;
 
-    const signed = op === "sub" ? -Math.abs(amount) : Math.abs(amount);
-
-    out.textContent="Gönderiliyor…"; out.className="msg";
-    try{
-      const form = new URLSearchParams();
-      form.set("email", email);
-      form.set("amount", String(signed));
-      const r = await fetch(API, { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body: form.toString() });
-      if(!r.ok) throw new Error("Sunucu hatası");
-      const text = await r.text();
-      out.innerHTML = `Yeni bakiye: <b>${Number(text||0).toLocaleString("tr-TR")}</b>`;
-      out.className="msg ok";
-    }catch(e){
-      out.textContent="Bağlantı hatası. Tekrar dene.";
-      out.className="msg err";
-    }
-  });
+    fetch(API_URL, {
+        method:"POST",
+        body:new URLSearchParams({ email:email, amount:amount })
+    })
+    .then(r=>r.text())
+    .then(t=>{
+        document.getElementById("status").innerHTML = "Yeni Bakiye: " + t + " ₺";
+    });
+}
 </script>
+
 </body>
 </html>
