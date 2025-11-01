@@ -1,109 +1,116 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ALBAY STEPS • Panel</title>
-  <link rel="manifest" href="manifest.json">
-  <style>
-    :root{--kirmizi:#e10600;--bg:#0b0b0b;--card:#141414;--text:#fff;--muted:#aaa}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Inter,Arial}
-    .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
-    .card{width:min(520px,94vw);background:var(--card);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    h1{margin:6px 0 10px;font-size:28px;color:#ff2a2a;text-align:center}
-    .kpi{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
-    .kpi div{background:#0f0f0f;border:1px solid #252525;border-radius:12px;padding:12px 14px}
-    input,button{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #2a2a2a;background:#0f0f0f;color:#fff;margin:6px 0 10px}
-    button{background:var(--kirmizi);border:0;font-weight:700}
-    .small{font-size:13px;color:var(--muted);text-align:center}
-    .ok{color:#78ff86}.err{color:#ff9b9b}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALBAY STEPS • Panel</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap">
+<style>
+body {
+  margin: 0;
+  background: #000;
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.container {
+  background: #111;
+  width: 90%;
+  max-width: 450px;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+}
+input {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  background: #222;
+  color: white;
+  font-size: 15px;
+}
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  background: #d90000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  cursor: pointer;
+}
+.logout {
+  background: #444;
+}
+.balance-box {
+  margin: 20px 0;
+  font-size: 20px;
+  padding: 12px;
+  background: #222;
+  border-radius: 8px;
+}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>ALBAY STEPS • Panel</h1>
-      <div id="who" class="small">—</div>
 
-      <div class="kpi">
-        <div>Bakiye: <b id="bal">0</b> ₺</div>
-      </div>
-
-      <button id="refresh">Bakiyeyi Yenile</button>
-
-      <div style="margin-top:12px">
-        <div class="small" style="margin:6px 0 8px">Para Çekme Talebi</div>
-        <input id="iban" placeholder="TR IBAN" />
-        <input id="wAmount" type="number" placeholder="Tutar" />
-        <button id="sendW">Talep Gönder</button>
-        <div id="wMsg" class="small"></div>
-      </div>
-
-      <button id="signOut" style="margin-top:14px;background:#333">Çıkış Yap</button>
-    </div>
+<div class="container">
+  <h2>ALBAY STEPS • Panel</h2>
+  <div class="balance-box">
+    Bakiye: <span id="balance">0</span> ₺
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+  <button onclick="getBalance()">Bakiyeyi Yenile</button>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-      authDomain: "albay-steps.firebaseapp.com",
-      projectId: "albay-steps",
-      storageBucket: "albay-steps.firebasestorage.app",
-      messagingSenderId: "398122699141",
-      appId: "1:398122699141:web:787430d8d67c3451dedcec",
-      measurementId: "G-HXLNJ884EL"
-    };
+  <h3>Para Çekme Talebi</h3>
+  <input type="text" id="iban" placeholder="TR IBAN">
+  <input type="number" id="amount" placeholder="Tutar">
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
+  <button onclick="withdraw()">Talep Gönder</button>
+  <button class="logout" onclick="logout()">Çıkış Yap</button>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+<script>
+// giriş kontrol
+const user = localStorage.getItem("userEmail");
+if (!user) window.location.href = "index.html";
 
-    const $ = (id)=>document.getElementById(id);
+// Google Script Linki
+const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
 
-    function phoneId(){ return localStorage.getItem('albay_phone') || ''; }
+// Bakiye çek
+function getBalance() {
+  fetch(API_URL + "?action=getBalance&email=" + user)
+  .then(r => r.text())
+  .then(balance => document.getElementById("balance").innerText = balance);
+}
 
-    async function loadBalance(){
-      const id = phoneId();
-      if(!id) return;
-      const r = await fetch(`${API_URL}?email=${encodeURIComponent(id)}`);
-      const t = (await r.text())||'0';
-      $('bal').textContent = Number(t).toLocaleString('tr-TR');
-    }
+// Para çekme talebi
+function withdraw() {
+  const iban = document.getElementById("iban").value;
+  const amount = document.getElementById("amount").value;
 
-    $('refresh').onclick = loadBalance;
+  if(iban === "" || amount === "") {
+    alert("İBAN ve Tutar boş olamaz.");
+    return;
+  }
 
-    $('sendW').onclick = async ()=>{
-      const id = phoneId();
-      const iban = $('iban').value.trim();
-      const amount = $('wAmount').value.trim();
-      const msg = $('wMsg');
-      if(!id || !iban || !amount){ msg.textContent='Telefon, IBAN ve tutar gerekli.'; msg.className='small err'; return; }
-      try{
-        const body = new URLSearchParams({ mode:'withdraw', email:id, iban, amount });
-        const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
-        const t = (await r.text()).trim();
-        if(t.startsWith('OK_')){ msg.textContent = 'Talep alındı ✅'; msg.className='small ok'; }
-        else if(t==='ERR_FUNDS'){ msg.textContent='Yetersiz bakiye.'; msg.className='small err'; }
-        else { msg.textContent='Hata: '+t; msg.className='small err'; }
-      }catch(e){ msg.textContent='Bağlantı hatası.'; msg.className='small err'; }
-    };
+  fetch(API_URL + "?action=withdraw&email=" + user + "&iban=" + iban + "&amount=" + amount)
+  .then(r => r.text())
+  .then(msg => alert("Talep Gönderildi ✅"));
+}
 
-    $('signOut').onclick = ()=> signOut(auth).then(()=>{ localStorage.removeItem('albay_phone'); location.href='index.html'; });
+// Çıkış
+function logout() {
+  localStorage.removeItem("userEmail");
+  window.location.href = "index.html";
+}
+</script>
 
-    onAuthStateChanged(auth, (user)=>{
-      if(!user){ location.href='index.html'; return; }
-      const phone = user.phoneNumber || '';
-      $('who').textContent = phone;
-      localStorage.setItem('albay_phone', phone);
-      loadBalance();
-    });
-
-    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
-  </script>
 </body>
 </html>
