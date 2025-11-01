@@ -1,46 +1,162 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>ALBAY ADMIN</title>
-  <style>
-    body { background: #000; color: #fff; text-align: center; font-family: Arial; padding-top: 60px; }
-    input { width: 80%; padding: 12px; margin: 10px; border-radius: 6px; border: none; font-size: 17px; }
-    button { background: #d60000; color: #fff; padding: 10px 20px; border-radius: 6px; border: none; margin: 6px; font-size: 17px; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ALBAY • Admin Panel</title>
+<style>
+  :root{
+    --bg:#0b0b0b; --card:#121212; --muted:#bdbdbd; --red:#e11d2e; --green:#20c997; --white:#fff;
+  }
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+  body{margin:0;background:var(--bg);color:var(--white)}
+  .wrap{max-width:760px;margin:32px auto;padding:20px}
+  .brand{font-size:28px;font-weight:800;letter-spacing:.6px;text-align:center;margin:12px 0 18px}
+  .brand span{color:var(--red)}
+  .card{background:var(--card);border:1px solid #222;border-radius:16px;padding:18px;box-shadow:0 10px 32px rgba(0,0,0,.35)}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+  input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #2b2b2b;background:#0f0f0f;color:#eee;outline:none}
+  input::placeholder{color:#7a7a7a}
+  .row{display:grid;grid-template-columns:1fr 160px;gap:12px}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button{cursor:pointer;border:0;border-radius:12px;padding:12px 16px;font-weight:700}
+  .pri{background:var(--red);color:#fff}
+  .sec{background:#232323;color:#eee}
+  .ok{background:var(--green);color:#08160f}
+  .out{background:#2b2b2b;color:#eee}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:#101010;border:1px solid #242424;margin-top:14px;font-weight:700}
+  .muted{color:var(--muted);font-weight:500}
+  .hr{height:1px;background:#1c1c1c;margin:18px 0}
+  .small{font-size:12px;color:#8c8c8c}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#131313;border:1px solid #2a2a2a;color:#ddd;padding:10px 14px;border-radius:10px;display:none}
+  .spinner{width:16px;height:16px;border:2px solid #333;border-top-color:#999;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(1turn)}}
+</style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="brand">ALBAY <span>ADMIN</span> PANEL</div>
 
-<h1>ALBAY ADMIN PANEL</h1>
+    <div class="card">
+      <label for="email">Kullanıcı (e-posta veya telefon)</label>
+      <input id="email" placeholder="ör. muratalbay510@gmail.com veya 905540046746" />
 
-<input type="text" id="email" placeholder="Telefon (örn: 905540046746)">
-<button onclick="getBalance()">Bakiye Göster</button>
+      <div class="row">
+        <div>
+          <label for="amount">Tutar (₺)</label>
+          <input id="amount" type="number" step="0.01" placeholder="ör. 10" />
+        </div>
+        <div class="btns" style="align-items:end;justify-content:flex-end">
+          <button class="sec" id="btnShow">Bakiyeyi Göster</button>
+        </div>
+      </div>
 
-<h2>Bakiye: <span id="balance">-</span> ₺</h2>
+      <div class="btns">
+        <button class="ok" id="btnAdd">Tutar Ekle</button>
+        <button class="out" id="btnSub">Tutar Düş</button>
+        <button class="pri" id="btnZero">Bakiyeyi Sıfırla</button>
+      </div>
 
-<input type="number" id="amount" placeholder="Tutar (örn: 50)">
-<button onclick="update(1)">Tutar Ekle</button>
-<button onclick="update(-1)">Tutar Düş</button>
+      <div class="badge">
+        <div class="spinner" id="spinner" style="display:none"></div>
+        <span>Bakiyе:</span>
+        <span id="balance" style="font-size:18px">—</span>
+        <span class="muted">₺</span>
+      </div>
+
+      <div class="hr"></div>
+      <div class="small">
+        • <b>Bakiyeyi Göster</b> yalnızca email/telefon ile sorgular. <br/>
+        • <b>Tutar Ekle/Düş</b> işleminde pozitif sayı gir; düşmek için “Tutar Düş”e bas (arka planda negatif gönderir).
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxl3xZW4ECMarPywCD_IS_3kq-Eo65ERGuQVufKHJ5lOjM8gdvse-YPhS3YYLUjYvOX/exec";
+  // 🔗 Apps Script Web App URL'in
+  const API_URL = "https://script.google.com/macros/s/AKfycbxl3xZW4ECMarPywCD_IS_3kq-Eo65ERGuQVufKHJ5lOjM8gdvse-YPhS3YYLUjYvOX/exec";
 
-function getBalance(){
- let email = document.getElementById("email").value;
- fetch(API + "?email=" + email)
- .then(r => r.text())
- .then(b => document.getElementById("balance").innerText = b);
-}
+  // yardimcilar
+  const $ = sel => document.querySelector(sel);
+  const spinner = $("#spinner");
+  const balOut  = $("#balance");
+  const toast   = $("#toast");
 
-function update(dir){
- let email = document.getElementById("email").value;
- let amount = document.getElementById("amount").value;
- let final = Number(amount) * dir;
- fetch(API + "?email=" + email + "&amount=" + final)
- .then(r => r.text())
- .then(newBalance => document.getElementById("balance").innerText = newBalance);
-}
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.style.display = "block";
+    setTimeout(()=> toast.style.display = "none", 2200);
+  }
+
+  function startLoading(){ spinner.style.display = "inline-block"; }
+  function stopLoading(){ spinner.style.display = "none"; }
+
+  function normEmail(v){
+    // baştaki/sondaki boşlukları temizle
+    v = (v||"").trim();
+    // Telefon ise + koyma, 0 ile başlıyorsa 90'a çevirme yok;
+    // Arkadaki Apps Script zaten metni olduğu gibi eşleştiriyor.
+    return v;
+  }
+
+  async function callAPI(params){
+    const url = API_URL + "?" + new URLSearchParams(params).toString();
+    const res = await fetch(url, { method:"GET", cache:"no-store" });
+    if(!res.ok) throw new Error("Ağ hatası: " + res.status);
+    const text = await res.text();
+    return text;
+  }
+
+  async function showBalance(){
+    const email = normEmail($("#email").value);
+    if(!email){ showToast("Email/Telefon gir."); return; }
+    try{
+      startLoading();
+      const r = await callAPI({ email });
+      balOut.textContent = r;
+      showToast("Bakiye güncellendi.");
+    }catch(e){
+      showToast("Hata: " + e.message);
+    }finally{ stopLoading(); }
+  }
+
+  async function changeAmount(sign){
+    const email = normEmail($("#email").value);
+    const val = $("#amount").value;
+    if(!email){ showToast("Email/Telefon gir."); return; }
+    if(!val){ showToast("Tutar gir."); return; }
+    let amount = parseFloat(val);
+    if(isNaN(amount)){ showToast("Tutar sayı olmalı."); return; }
+    if(sign < 0) amount = -Math.abs(amount);
+
+    try{
+      startLoading();
+      const r = await callAPI({ email, amount: amount.toString() });
+      // API yeni bakiyeyi döndürüyor
+      balOut.textContent = r;
+      showToast(sign > 0 ? "Tutar eklendi." : "Tutar düşüldü.");
+    }catch(e){
+      showToast("Hata: " + e.message);
+    }finally{ stopLoading(); }
+  }
+
+  async function zeroBalance(){
+    $("#amount").value = "0";
+    await changeAmount(0); // amount=0 -> API mevcut bakiyeyi döndürür (değişmez)
+    // Sıfırlamak için mevcut bakiyeyi çekip negatif gönderiyoruz
+    const current = parseFloat(balOut.textContent || "0");
+    if(isNaN(current) || current === 0){ showToast("Zaten 0."); return; }
+    $("#amount").value = String(current);
+    await changeAmount(-1);
+  }
+
+  // butonlar
+  $("#btnShow").addEventListener("click", showBalance);
+  $("#btnAdd").addEventListener("click", ()=>changeAmount(1));
+  $("#btnSub").addEventListener("click", ()=>changeAmount(-1));
+  $("#btnZero").addEventListener("click", zeroBalance);
 </script>
-
 </body>
 </html>
