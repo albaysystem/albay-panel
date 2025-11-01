@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ALBAY STEPS • Panel</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root{--kirmizi:#e10600;--bg:#0b0b0b;--card:#141414;--text:#fff;--muted:#aaa}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Inter,Arial}
+    .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
+    .card{width:min(520px,94vw);background:var(--card);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{margin:6px 0 10px;font-size:28px;color:#ff2a2a;text-align:center}
+    .kpi{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+    .kpi div{background:#0f0f0f;border:1px solid #252525;border-radius:12px;padding:12px 14px}
+    input,button{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #2a2a2a;background:#0f0f0f;color:#fff;margin:6px 0 10px}
+    button{background:var(--kirmizi);border:0;font-weight:700}
+    .small{font-size:13px;color:var(--muted);text-align:center}
+    .ok{color:#78ff86}.err{color:#ff9b9b}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ALBAY STEPS • Panel</h1>
+      <div id="who" class="small">—</div>
+
+      <div class="kpi">
+        <div>Bakiye: <b id="bal">0</b> ₺</div>
+      </div>
+
+      <button id="refresh">Bakiyeyi Yenile</button>
+
+      <div style="margin-top:12px">
+        <div class="small" style="margin:6px 0 8px">Para Çekme Talebi</div>
+        <input id="iban" placeholder="TR IBAN" />
+        <input id="wAmount" type="number" placeholder="Tutar" />
+        <button id="sendW">Talep Gönder</button>
+        <div id="wMsg" class="small"></div>
+      </div>
+
+      <button id="signOut" style="margin-top:14px;background:#333">Çıkış Yap</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
+      authDomain: "albay-steps.firebaseapp.com",
+      projectId: "albay-steps",
+      storageBucket: "albay-steps.firebasestorage.app",
+      messagingSenderId: "398122699141",
+      appId: "1:398122699141:web:787430d8d67c3451dedcec",
+      measurementId: "G-HXLNJ884EL"
+    };
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const $ = (id)=>document.getElementById(id);
+
+    function phoneId(){ return localStorage.getItem('albay_phone') || ''; }
+
+    async function loadBalance(){
+      const id = phoneId();
+      if(!id) return;
+      const r = await fetch(`${API_URL}?email=${encodeURIComponent(id)}`);
+      const t = (await r.text())||'0';
+      $('bal').textContent = Number(t).toLocaleString('tr-TR');
+    }
+
+    $('refresh').onclick = loadBalance;
+
+    $('sendW').onclick = async ()=>{
+      const id = phoneId();
+      const iban = $('iban').value.trim();
+      const amount = $('wAmount').value.trim();
+      const msg = $('wMsg');
+      if(!id || !iban || !amount){ msg.textContent='Telefon, IBAN ve tutar gerekli.'; msg.className='small err'; return; }
+      try{
+        const body = new URLSearchParams({ mode:'withdraw', email:id, iban, amount });
+        const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+        const t = (await r.text()).trim();
+        if(t.startsWith('OK_')){ msg.textContent = 'Talep alındı ✅'; msg.className='small ok'; }
+        else if(t==='ERR_FUNDS'){ msg.textContent='Yetersiz bakiye.'; msg.className='small err'; }
+        else { msg.textContent='Hata: '+t; msg.className='small err'; }
+      }catch(e){ msg.textContent='Bağlantı hatası.'; msg.className='small err'; }
+    };
+
+    $('signOut').onclick = ()=> signOut(auth).then(()=>{ localStorage.removeItem('albay_phone'); location.href='index.html'; });
+
+    onAuthStateChanged(auth, (user)=>{
+      if(!user){ location.href='index.html'; return; }
+      const phone = user.phoneNumber || '';
+      $('who').textContent = phone;
+      localStorage.setItem('albay_phone', phone);
+      loadBalance();
+    });
+
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+  </script>
+</body>
+</html>
