@@ -1,108 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ALBAY STEPS • Giriş</title>
-  <link rel="manifest" href="manifest.json">
-  <style>
-    :root{--kirmizi:#e10600;--bg:#0b0b0b;--card:#141414;--text:#fff;--muted:#aaa}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Inter,Arial}
-    .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
-    .card{width:min(480px,92vw);background:var(--card);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    h1{margin:6px 0 16px;font-size:28px;color:#ff2a2a;text-align:center;letter-spacing:.4px}
-    label{font-size:13px;color:var(--muted)}
-    input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #2a2a2a;background:#0f0f0f;color:#fff;margin:8px 0 12px}
-    button{width:100%;padding:14px 16px;border:0;border-radius:12px;background:var(--kirmizi);color:#fff;font-weight:700;font-size:16px}
-    .row{display:grid;grid-template-columns:1fr;gap:10px}
-    .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
-    #recaptcha-container{margin-top:10px;display:grid;place-items:center}
-    .ok{color:#78ff86}.err{color:#ff9b9b}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALBAY STEPS • Giriş</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap">
+<style>
+body {
+  margin: 0;
+  background: #000;
+  font-family: 'Montserrat', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: white;
+}
+.container {
+  width: 90%;
+  max-width: 400px;
+  background: #111;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+}
+input {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  background: #222;
+  color: white;
+  font-size: 15px;
+  outline: none;
+}
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  background: #d90000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  cursor: pointer;
+}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>ALBAY STEPS</h1>
-      <div class="row">
-        <label for="phone">Telefon Numarası (örn: +90XXXXXXXXXX)</label>
-        <input id="phone" type="tel" placeholder="+90..." autocomplete="tel" />
-        <div id="recaptcha-container"></div>
-        <button id="sendCode">SMS Kodu Gönder</button>
 
-        <label for="code" style="margin-top:8px">Gelen SMS Kodu</label>
-        <input id="code" type="text" placeholder="123456" />
-        <button id="verifyCode">Giriş Yap</button>
-        <div id="msg" class="small"></div>
-      </div>
-    </div>
-  </div>
+<div class="container">
+  <h2>ALBAY STEPS</h2>
+  <p>Giriş Yap</p>
 
-  <!-- Firebase SDK (v10 modules) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+  <input type="text" id="email" placeholder="Telefon Numaranız (Örn: 905xx)">
+  <button onclick="login()">Giriş Yap</button>
+</div>
 
-    // 🔴 Firebase config (senin projenden)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAEQy9wEnip-cIsBRUdm6raL_uTkwxQVC8",
-      authDomain: "albay-steps.firebaseapp.com",
-      projectId: "albay-steps",
-      storageBucket: "albay-steps.firebasestorage.app",
-      messagingSenderId: "398122699141",
-      appId: "1:398122699141:web:787430d8d67c3451dedcec",
-      measurementId: "G-HXLNJ884EL"
-    };
+<script>
+function login() {
+  const email = document.getElementById("email").value.trim();
+  if(email === "") {
+    alert("Numara boş olamaz.");
+    return;
+  }
+  localStorage.setItem("userEmail", email);
+  window.location.href = "panel.html";
+}
+</script>
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec"; // Apps Script API (hazır)
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    auth.languageCode = 'tr';
-
-    const $ = (id)=>document.getElementById(id);
-    let confResult = null;
-
-    // reCAPTCHA (Firebase otomatik görünür)
-    const recaptcha = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'normal' });
-
-    // Eğer zaten girişliyse direkt panele al
-    onAuthStateChanged(auth, (user)=>{
-      if(user){
-        const phone = user.phoneNumber || '';
-        localStorage.setItem('albay_phone', phone);
-        location.href = 'panel.html';
-      }
-    });
-
-    $('sendCode').onclick = async () => {
-      const phone = $('phone').value.trim();
-      $('msg').textContent = '';
-      if(!phone.startsWith('+90')){
-        $('msg').textContent = 'Lütfen +90 ile başlayan formatta gir.'; $('msg').className='small err'; return;
-      }
-      try{
-        confResult = await signInWithPhoneNumber(auth, phone, recaptcha);
-        $('msg').textContent = 'SMS gönderildi. Kodu giriniz.'; $('msg').className='small ok';
-      }catch(e){ $('msg').textContent = 'Gönderilemedi: ' + e.message; $('msg').className='small err'; }
-    };
-
-    $('verifyCode').onclick = async () => {
-      const code = $('code').value.trim();
-      if(!confResult){ $('msg').textContent='Önce SMS kodu gönderiniz.'; $('msg').className='small err'; return; }
-      try{
-        const cred = await confResult.confirm(code);
-        const phone = cred.user.phoneNumber;
-        localStorage.setItem('albay_phone', phone);
-        // ilk girişte kaydı garanti altına almak için 0 bakiye isteği
-        await fetch(`${API_URL}?email=${encodeURIComponent(phone)}`);
-        location.href = 'panel.html';
-      }catch(e){ $('msg').textContent = 'Kod doğrulanamadı: ' + e.message; $('msg').className='small err'; }
-    };
-
-    // PWA service worker
-    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
-  </script>
 </body>
 </html>
