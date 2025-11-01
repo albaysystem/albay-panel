@@ -1,45 +1,54 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ALBAY STEPS</title>
 <link rel="manifest" href="https://albaysystem.github.io/manifest.json">
 <style>
-body { background: #111; font-family: Arial; text-align: center; color: white; }
-.card { margin: 120px auto; background: #000; padding: 40px; border-radius: 20px; width: 90%; max-width: 380px; }
-input { width: 100%; padding: 12px; border-radius: 8px; border: none; margin-bottom: 12px; }
-button { width: 100%; padding: 14px; background: red; border: none; border-radius: 8px; color: white; font-size: 18px; }
-#result { margin-top: 18px; font-size: 18px; }
+  :root { --kirmizi:#e10600; --siyah:#0d0d0d; --gri:#1a1a1a; --metin:#fff; }
+  body{margin:0;background:#000;color:var(--metin);font-family:system-ui,Segoe UI,Roboto,Arial}
+  .wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
+  .card{width:min(480px,92vw);background:var(--gri);border-radius:18px;padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  h1{margin:4px 0 16px;font-size:34px;letter-spacing:.5px;color:#ff2a2a;text-align:center}
+  label{font-size:14px;opacity:.9}
+  input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #333;background:#0f0f0f;color:#fff;margin:8px 0 14px}
+  button{width:100%;padding:14px 16px;border:0;border-radius:12px;background:var(--kirmizi);color:#fff;font-weight:700;font-size:16px}
+  .msg{margin-top:14px;min-height:22px;text-align:center;opacity:.95}
+  .ok{color:#78ff86}.err{color:#ff9b9b}
 </style>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwFg5WEu1q3e4E1nJ0aXb4IAOIK8FDEtjbqnftCgFHlvCWkrZ9CNOHVRgEHEDk01hfq/exec";
-
-async function showBalance() {
-  const email = document.getElementById("email").value.trim();
-  if (!email) return alert("Email gir.");
-
-  document.getElementById("result").innerText = "Kontrol ediliyor...";
-
-  try {
-    let res = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
-    let text = await res.text();
-    document.getElementById("result").innerText = "Bakiyen: " + text;
-  } catch {
-    document.getElementById("result").innerText = "Bağlantı hatası. Tekrar dene.";
-  }
-}
-</script>
 </head>
-
 <body>
-<div class="card">
-<h1>ALBAY STEPS</h1>
-
-<input type="email" id="email" placeholder="E-posta">
-<button onclick="showBalance()">Bakiyemi Göster</button>
-
-<div id="result"></div>
+<div class="wrap">
+  <div class="card">
+    <h1>ALBAY STEPS</h1>
+    <label for="email">E-posta</label>
+    <input id="email" type="email" placeholder="ornek@eposta.com" autocomplete="email" />
+    <button id="btn">Bakiyemi Göster</button>
+    <div id="out" class="msg"></div>
+  </div>
 </div>
+<script>
+  const API = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
+
+  const $ = id => document.getElementById(id);
+  $("btn").addEventListener("click", async () => {
+    const email = $("email").value.trim();
+    const out = $("out");
+    if(!email){ out.textContent="E-posta gir."; out.className="msg err"; return; }
+    out.textContent="Kontrol ediliyor…"; out.className="msg";
+    try{
+      const r = await fetch(`${API}?email=${encodeURIComponent(email)}`, { method:"GET" });
+      if(!r.ok) throw new Error("Sunucu hatası");
+      const text = await r.text(); // Apps Script ContentService string döndürür
+      const balance = Number(text || 0);
+      out.innerHTML = `Bakiye: <b>${balance.toLocaleString("tr-TR")}</b>`; 
+      out.className="msg ok";
+    }catch(e){
+      out.textContent="Bağlantı hatası. Birazdan tekrar dene."; 
+      out.className="msg err";
+    }
+  });
+</script>
 </body>
 </html>
