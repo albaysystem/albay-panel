@@ -1,75 +1,110 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ALBAY STEPS • Admin Panel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{background:#000;color:#fff;font-family:Arial;text-align:center;margin:0;}
-.container{max-width:520px;margin:auto;background:#111;padding:20px;border-radius:12px;margin-top:40px;}
-input,button{width:100%;padding:12px;border:none;border-radius:6px;margin-top:10px;}
-button{background:#ff0000;color:#fff;font-weight:bold;}
-table{width:100%;margin-top:20px;border-collapse:collapse;}
-td,th{border-bottom:1px solid #333;padding:8px;}
+  :root{--bg:#000;--card:#111;--red:#e50914;--txt:#fff;}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif}
+  .wrap{max-width:880px;margin:32px auto;padding:16px}
+  .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.35);margin-bottom:18px}
+  h1{margin:6px 0 12px;text-align:center;font-size:22px;letter-spacing:.4px}
+  h2{font-size:18px;margin:0 0 10px}
+  input,button{padding:10px;border:none;border-radius:8px;font-size:14px}
+  input{background:#1a1a1a;color:#fff}
+  button{background:var(--red);color:#fff;font-weight:700;cursor:pointer}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #222;padding:10px;text-align:left;font-size:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .grow{flex:1}
+  .muted{opacity:.75}
 </style>
 </head>
 <body>
+<div class="wrap">
+  <div class="card">
+    <h1>ALBAY STEPS • Admin Panel</h1>
+    <div class="muted" id="msg"></div>
+  </div>
 
-<div class="container">
-<h2>ALBAY STEPS • Admin Panel</h2>
+  <div class="card">
+    <h2>Kullanıcı Bakiyeleri</h2>
+    <div class="row"><button onclick="loadUsers()">Yenile</button></div>
+    <table id="usersTable">
+      <thead><tr><th>Kullanıcı</th><th>Bakiye (₺)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-<h3>Kullanıcı Bakiyeleri</h3>
-<table id="usersTable">
-<tr><th>Kullanıcı</th><th>Bakiye (₺)</th></tr>
-</table>
-<button onclick="loadUsers()">Yenile</button>
+  <div class="card">
+    <h2>Bakiye Ekle / Düş</h2>
+    <div class="row">
+      <input class="grow" id="email" placeholder="Telefon veya Email">
+      <input style="max-width:160px" id="amount" type="number" placeholder="+20 ya da -15">
+      <button style="min-width:140px" onclick="updateBalance()">Uygula</button>
+    </div>
+  </div>
 
-<h3>Bakiye Ekle / Düş</h3>
-<input type="text" id="email" placeholder="Telefon veya Email">
-<input type="number" id="amount" placeholder="Örn: +20 veya -15">
-<button onclick="updateBalance()">Uygula</button>
+  <div class="card">
+    <h2>Çekim Talepleri</h2>
+    <div class="row"><button onclick="loadWithdraws()">Yenile</button></div>
+    <table id="withdrawTable">
+      <thead><tr><th>Kullanıcı</th><th>IBAN</th><th>Tutar</th><th>Durum</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-<h3>Çekim Talepleri</h3>
-<table id="withdrawTable">
-<tr><th>Kullanıcı</th><th>IBAN</th><th>Tutar</th></tr>
-</table>
-<button onclick="loadWithdraws()">Yenile</button>
-
-<button onclick="logout()">Çıkış Yap</button>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyswecnhUaWo4p3QnskqW6smzi4M8v8ggICy81pFsJ4mbraOSEV3VNcrMThjPgUiH64/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbw01OAPtkTcocisZvvsPOfEcoIMvLYt3W7v03d83mVCdduvtWk9p5CwsEebGB2CEoru/exec";
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  const say = t => $('#msg').textContent = t || '';
 
-function loadUsers(){
- fetch(API_URL + "?all=1")
- .then(r=>r.json()).then(data=>{
-  let t=document.getElementById("usersTable");
-  t.innerHTML="<tr><th>Kullanıcı</th><th>Bakiye (₺)</th></tr>";
-  data.forEach(x=>t.innerHTML+=`<tr><td>${x.email}</td><td>${x.balance}</td></tr>`);
- });
-}
+  async function loadUsers(){
+    try{
+      const r = await fetch(`${API_URL}?all=1&cb=${Date.now()}`);
+      const arr = await r.json();
+      const tb = $('#usersTable tbody'); tb.innerHTML='';
+      arr.forEach(u=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u.email}</td><td>${u.balance}</td>`;
+        tb.appendChild(tr);
+      });
+      say(`Toplam ${arr.length} kullanıcı listelendi.`);
+    }catch(e){ say('Kullanıcılar alınamadı.'); }
+  }
 
-function updateBalance(){
- let email=document.getElementById("email").value;
- let amount=document.getElementById("amount").value;
- fetch(API_URL+`?admin=1&email=${email}&amount=${amount}`)
- .then(r=>r.text()).then(alert);
-}
+  async function updateBalance(){
+    const email = $('#email').value.trim();
+    const amount = $('#amount').value.trim();
+    if(!email || !amount){ say('Email/Telefon ve tutar gerekli.'); return; }
+    try{
+      const r = await fetch(`${API_URL}?admin=1&email=${encodeURIComponent(email)}&amount=${encodeURIComponent(amount)}&cb=${Date.now()}`);
+      const txt = await r.text();
+      if(txt.includes('OK')){ say('Güncellendi.'); loadUsers(); }
+      else{ say('Güncelleme başarısız.'); }
+    }catch(e){ say('Bağlantı hatası.'); }
+  }
 
-function loadWithdraws(){
- fetch(API_URL + "?withdraws=1")
- .then(r=>r.json()).then(data=>{
-  let t=document.getElementById("withdrawTable");
-  t.innerHTML="<tr><th>Kullanıcı</th><th>IBAN</th><th>Tutar</th></tr>";
-  data.forEach(x=>t.innerHTML+=`<tr><td>${x.email}</td><td>${x.iban}</td><td>${x.amount} ₺</td></tr>`);
- });
-}
+  async function loadWithdraws(){
+    try{
+      const r = await fetch(`${API_URL}?withdraws=1&cb=${Date.now()}`);
+      const arr = await r.json();
+      const tb = $('#withdrawTable tbody'); tb.innerHTML='';
+      arr.forEach(w=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${w.email}</td><td>${w.iban||''}</td><td>${w.amount} ₺</td><td>${w.status||'pending'}</td>`;
+        tb.appendChild(tr);
+      });
+      say(`Toplam ${arr.length} çekim talebi listelendi.`);
+    }catch(e){ say('Çekim talepleri alınamadı.'); }
+  }
 
-function logout(){ location.href="index.html"; }
-loadUsers();
-loadWithdraws();
+  // otomatik yükle
+  loadUsers(); loadWithdraws();
 </script>
-
 </body>
 </html>
