@@ -1,82 +1,79 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ALBAY STEPS • Panel</title>
-  <style>
-    body{background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;margin:0}
-    .wrap{max-width:520px;margin:40px auto;padding:20px;background:#111;border-radius:14px}
-    h1{font-size:22px;text-align:center;margin:0 0 14px}
-    .badge{display:inline-block;background:#181818;border:1px solid #333;padding:10px 14px;border-radius:10px;margin:8px 0}
-    label{display:block;margin:14px 0 6px;color:#bbb;font-size:13px}
-    input,button{width:100%;padding:12px;border:none;border-radius:8px}
-    input{background:#191919;color:#fff;border:1px solid #2b2b2b}
-    button{background:#e30606;color:#fff;font-weight:700;margin-top:10px;cursor:pointer}
-    .hint{font-size:12px;color:#8a8a8a;text-align:center;margin-top:8px}
-  </style>
+<meta charset="UTF-8">
+<title>ALBAY STEPS • Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{background:#000;color:#fff;font-family:Arial;margin:0;text-align:center;}
+.container{max-width:400px;margin:40px auto;padding:20px;}
+h2{margin-bottom:10px;}
+#balance{font-size:22px;font-weight:bold;margin:10px 0;}
+button,input{width:100%;padding:14px;margin-top:10px;border:none;border-radius:6px;font-size:16px;}
+button{background:#ff0000;color:#fff;font-weight:bold;}
+button#logout{background:#444;}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>ALBAY STEPS • Panel</h1>
 
-    <label>Telefon / Email</label>
-    <input id="email" placeholder="9055... veya email" />
+<div class="container">
+<h2>ALBAY STEPS • Panel</h2>
 
-    <div class="badge">Bakiye: <span id="bal">0</span> ₺</div>
-    <button id="refreshBtn">Bakiyeyi Yenile</button>
+<div id="balance">Bakiye: 0 ₺</div>
+<button onclick="refreshBalance()">Bakiyeyi Yenile</button>
 
-    <h3 style="margin-top:20px">Para Çekme Talebi</h3>
-    <label>TR IBAN</label>
-    <input id="iban" placeholder="TR.." />
-    <label>Tutar</label>
-    <input id="amount" type="number" placeholder="Tutar (₺)" />
-    <button id="sendBtn">Talep Gönder</button>
+<h3 style="margin-top:25px;">Para Çekme Talebi</h3>
+<input id="ibanInput" placeholder="TR IBAN" />
+<input id="amountInput" type="number" placeholder="Örn: 50" />
+<button onclick="sendWithdraw()">Talep Gönder</button>
 
-    <button id="logoutBtn" style="background:#444;margin-top:16px">Çıkış Yap</button>
-    <div class="hint">Telefon/Email, IBAN ve tutar zorunludur.</div>
-  </div>
+<button id="logout" onclick="logout()">Çıkış Yap</button>
+</div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
+<script>
+const API_URL="https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
 
-    const $ = id => document.getElementById(id);
-    // email’i yerel hafızada tut
-    const saved = localStorage.getItem("albay_email");
-    if (saved) $("email").value = saved;
+function getEmail(){
+  const e=localStorage.getItem("userEmail");
+  return e?e.trim():"";
+}
 
-    function getEmail(){
-      const v = $("email").value.trim();
-      if(!v){ alert("Önce telefon/email gir."); return null; }
-      localStorage.setItem("albay_email", v);
-      return v;
-    }
+function logout(){
+  localStorage.removeItem("userEmail");
+  window.location.href="login.html";
+}
 
-    async function refreshBalance(){
-      const email = getEmail(); if(!email) return;
-      const res = await fetch(`${API_URL}?balance=1&email=${encodeURIComponent(email)}`);
-      const txt = await res.text();
-      $("bal").textContent = isNaN(parseFloat(txt)) ? "0" : txt;
-    }
+async function refreshBalance(){
+  try{
+    const email=getEmail();
+    if(!email){alert("Giriş yapmadın.");return;}
+    const res=await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
+    const txt=await res.text();
+    const bal=Number(txt)||0;
+    document.getElementById("balance").textContent="Bakiye: "+bal+" ₺";
+  }catch(e){alert("Bakiye alınamadı.");}
+}
 
-    async function sendWithdraw(){
-      const email = getEmail(); if(!email) return;
-      const iban = $("iban").value.trim();
-      const amount = parseFloat($("amount").value);
-      if(!iban || !amount){ alert("IBAN ve tutar gir."); return; }
-      const url = `${API_URL}?withdraw=1&email=${encodeURIComponent(email)}&iban=${encodeURIComponent(iban)}&amount=${encodeURIComponent(amount)}`;
-      const res = await fetch(url);
-      const msg = await res.text();
-      alert("Talep gönderildi: " + msg);
-      await refreshBalance();
-    }
+async function sendWithdraw(){
+  const email=getEmail();
+  if(!email){alert("Giriş yap.");return;}
 
-    $("refreshBtn").onclick = refreshBalance;
-    $("sendBtn").onclick = sendWithdraw;
-    $("logoutBtn").onclick = () => { localStorage.removeItem("albay_email"); $("email").value=""; $("bal").textContent="0"; };
+  const iban=document.getElementById("ibanInput").value.trim().toUpperCase();
+  const amount=Number(document.getElementById("amountInput").value);
 
-    // otomatik bakiye çek
+  if(!iban.startsWith("TR")||iban.length<20){alert("Geçerli IBAN gir.");return;}
+  if(!amount||amount<=0){alert("Tutar geçersiz.");return;}
+
+  try{
+    const res=await fetch(`${API_URL}?withdraw=1&email=${encodeURIComponent(email)}&iban=${encodeURIComponent(iban)}&amount=${amount}`);
+    const msg=await res.text();
+    alert(msg);
     refreshBalance();
-  </script>
+  }catch(e){alert("Talep gönderilemedi.");}
+}
+
+document.addEventListener("DOMContentLoaded",refreshBalance);
+</script>
+
 </body>
 </html>
