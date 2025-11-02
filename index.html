@@ -1,137 +1,24 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>ALBAY STEPS • Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root { --bg:#000; --card:#111; --text:#fff; --muted:#bbb; --danger:#ff0000; }
-    *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-    body{margin:0;background:var(--bg);color:var(--text);display:flex;min-height:100vh;align-items:center;justify-content:center}
-    .container{width:100%;max-width:560px;background:var(--card);padding:22px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-    h1{margin:4px 0 18px 0;text-align:center;letter-spacing:.5px}
-    .balance{display:inline-block;padding:8px 14px;border:1px solid #222;border-radius:10px;margin:8px 0 14px 0;background:#0b0b0b}
-    label{display:block;margin:10px 0 6px;color:var(--muted);font-size:.9rem}
-    input{width:100%;padding:12px 14px;border:none;border-radius:8px;background:#0b0b0b;color:#fff;outline:1px solid #222}
-    input::placeholder{color:#777}
-    .row{display:flex;gap:10px}
-    button{width:100%;padding:13px 16px;border:none;border-radius:10px;background:var(--danger);color:#fff;font-weight:700;margin-top:12px;cursor:pointer}
-    .ghost{background:#2a2a2a}
-    .hint{color:#aaa;font-size:.85rem;text-align:center;margin-top:8px}
-    .hidden{display:none}
-  </style>
+<meta charset="UTF-8">
+<title>ALBAY STEPS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{background:#000;color:#fff;text-align:center;font-family:Arial;margin:0;}
+.container{max-width:400px;margin:100px auto;}
+button{width:100%;padding:15px;margin-top:10px;border:none;border-radius:6px;background:#ff0000;color:#fff;font-size:18px;font-weight:bold;}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>ALBAY STEPS • Panel</h1>
 
-    <!-- GİRİŞ KARTI -->
-    <div id="loginCard">
-      <label for="phone">Telefon (ör: 9055XXXXXXXX)</label>
-      <input id="phone" type="tel" inputmode="numeric" placeholder="9055XXXXXXXX" />
-      <button id="btnLogin">Giriş Yap</button>
-      <p class="hint">Girişten sonra numaran saklanır ve bakiyen getirilecektir.</p>
-    </div>
+<div class="container">
+<h1>ALBAY STEPS</h1>
+<p>Hoş Geldin</p>
 
-    <!-- PANEL KARTI -->
-    <div id="panelCard" class="hidden">
-      <div style="text-align:center">
-        <div class="balance">Bakiye: <b id="balanceText">0 ₺</b></div>
-      </div>
-      <button id="btnRefresh">Bakiyeyi Yenile</button>
+<button onclick="window.location.href='login.html'">Giriş Yap</button>
+<button onclick="window.location.href='register.html'">Kayıt Ol</button>
+</div>
 
-      <h3 style="margin:18px 0 8px">Para Çekme Talebi</h3>
-      <label for="iban">TR IBAN</label>
-      <input id="iban" type="text" placeholder="TRXXXXXXXXXXXXXXXXXXXXXX" />
-
-      <label for="amount">Tutar (₺)</label>
-      <input id="amount" type="number" inputmode="numeric" placeholder="Örn: 50" />
-
-      <button id="btnWithdraw">Talep Gönder</button>
-      <p class="hint">Telefon, IBAN ve tutar gerekli.</p>
-
-      <button id="btnLogout" class="ghost">Çıkış Yap</button>
-    </div>
-  </div>
-
-  <script>
-    // ▼ SENİN APPS SCRIPT WEB APP URL'İN (hazır):
-    const API_URL = "https://script.google.com/macros/s/AKfycbyKGnhEBtOwlRsuNbAWGP7OFU887akGiQs1jNyXU0IjymIAiu30kNdmhW1fjCxLIrnS/exec";
-
-    // localStorage'da telefon tutulan anahtar
-    const KEY = "albay_phone";
-
-    const loginCard   = document.getElementById("loginCard");
-    const panelCard   = document.getElementById("panelCard");
-    const phoneInput  = document.getElementById("phone");
-    const balanceText = document.getElementById("balanceText");
-    const ibanInput   = document.getElementById("iban");
-    const amountInput = document.getElementById("amount");
-
-    // UI göster/gizle
-    function showPanel() { loginCard.classList.add("hidden"); panelCard.classList.remove("hidden"); }
-    function showLogin() { panelCard.classList.add("hidden"); loginCard.classList.remove("hidden"); }
-
-    // Bakiye getir
-    async function fetchBalance() {
-      const phone = localStorage.getItem(KEY);
-      if (!phone) return;
-      try {
-        const res = await fetch(`${API_URL}?email=${encodeURIComponent(phone)}`);
-        const txt = await res.text();
-        const n = Number(txt);
-        balanceText.textContent = isFinite(n) ? `${n} ₺` : "0 ₺";
-      } catch (e) {
-        balanceText.textContent = "0 ₺";
-        alert("Bakiye alınamadı. İnternetini kontrol et.");
-      }
-    }
-
-    // Para çekme
-    async function sendWithdraw() {
-      const phone  = localStorage.getItem(KEY);
-      const iban   = ibanInput.value.trim();
-      const amount = amountInput.value.trim();
-      if (!phone || !iban || !amount) { alert("Telefon, IBAN ve tutar zorunlu."); return; }
-      try {
-        const url = `${API_URL}?withdraw=1&email=${encodeURIComponent(phone)}&iban=${encodeURIComponent(iban)}&amount=${encodeURIComponent(amount)}`;
-        const res = await fetch(url);
-        const msg = await res.text();
-        alert(msg || "Talep oluşturuldu.");
-        amountInput.value = "";
-        await fetchBalance();
-      } catch (e) {
-        alert("Talep gönderilemedi.");
-      }
-    }
-
-    // Giriş
-    document.getElementById("btnLogin").addEventListener("click", () => {
-      const v = (phoneInput.value || "").trim();
-      if (!/^9\d{11}$/.test(v)) {  // 9055… formatı için basit kontrol
-        alert("Telefonu 9055XXXXXXXX formatında gir.");
-        return;
-      }
-      localStorage.setItem(KEY, v);
-      showPanel();
-      fetchBalance();
-    });
-
-    // Çıkış
-    document.getElementById("btnLogout").addEventListener("click", () => {
-      localStorage.removeItem(KEY);
-      phoneInput.value = "";
-      showLogin();
-    });
-
-    document.getElementById("btnRefresh").addEventListener("click", fetchBalance);
-    document.getElementById("btnWithdraw").addEventListener("click", sendWithdraw);
-
-    // İlk yükleme
-    (function init(){
-      const saved = localStorage.getItem(KEY);
-      if (saved) { showPanel(); fetchBalance(); } else { showLogin(); }
-    })();
-  </script>
 </body>
 </html>
