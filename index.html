@@ -1,36 +1,62 @@
-<!doctype html><html lang="tr"><meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
 <title>ALBAY STEPS • Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  body{background:#000;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  .box{max-width:680px;margin:40px auto;padding:24px;border-radius:14px;background:#0d0d0d;text-align:center}
-  h1{color:#ff2a2a;margin:0 0 18px}
-  input,button{width:100%;padding:14px;border-radius:10px;border:0;font-size:16px}
-  input{background:#111;color:#fff;outline:1px solid #222}
-  .btn{background:#e10600;color:#fff;font-weight:700;cursor:pointer;margin-top:10px}
-  .muted{opacity:.8;margin-top:12px}
+body{background:#000;color:#fff;font-family:Arial;text-align:center;margin:0;}
+.container{max-width:500px;margin:auto;background:#111;padding:20px;border-radius:12px;margin-top:40px;}
+button{width:100%;padding:12px;border:none;border-radius:6px;background:#ff0000;color:#fff;font-weight:bold;margin-top:10px;}
+input{width:100%;padding:12px;border:none;border-radius:6px;margin-top:10px;background:#222;color:#fff;}
 </style>
-<div class="box">
-  <h1>ALBAY STEPS • Panel</h1>
-  <div id="bal" class="muted">Bakiye: 0 ₺</div>
-  <button class="btn" onclick="refresh()">Bakiyeyi Yenile</button>
-  <h3 class="muted">Para Çekme Talebi</h3>
-  <input id="iban" placeholder="TR IBAN">
-  <input id="amt" placeholder="Tutar">
-  <button class="btn" onclick="req()">Talep Gönder</button>
-  <button class="btn" onclick="logout()">Çıkış Yap</button>
-  <div id="msg" class="muted"></div>
-</div>
-<script>
-const API_URL="https://script.google.com/macros/s/AKfycbzKhlIcctWQh_ulxBzenRcXZRRu1w7-QOrxUWhQ1GbiAZ8RswQ67tHbTMrKkoAAxwhY/exec";
-const email=localStorage.getItem('albay_user')||'905540046746'; // örnek
+</head>
+<body>
 
-async function refresh(){
-  const r=await fetch(API_URL+'?'+new URLSearchParams({email}));
-  const v=await r.text(); document.getElementById('bal').innerText='Bakiye: '+v+' ₺';
+<div class="container">
+
+<h2>ALBAY STEPS • Panel</h2>
+
+<p id="balance">Bakiyeniz: 0 ₺</p>
+<button onclick="getBalance()">Bakiyeyi Yenile</button>
+
+<h3>Para Çekme Talebi</h3>
+<input type="text" id="iban" placeholder="TR IBAN">
+<input type="number" id="amount" placeholder="Tutar">
+<button onclick="withdraw()">Talep Gönder</button>
+
+<button onclick="logout()">Çıkış Yap</button>
+
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyKGnhEBtOwlRsuNbAWGP7OFU887akGiQs1jNyXU0IjymIAiu30kNdmhW1fjCxLIrnS/exec";
+
+const email = localStorage.getItem("email") || prompt("Telefon Numaranı Gir:");
+localStorage.setItem("email", email);
+
+function getBalance() {
+  fetch(API_URL + "?email=" + email)
+  .then(r => r.text())
+  .then(balance => document.getElementById("balance").innerText = "Bakiyeniz: " + balance + " ₺");
 }
-function req(){document.getElementById('msg').innerText='Talebin alındı (demo).';}
-function logout(){localStorage.removeItem('albay_user');location.href='index.html';}
-refresh();
+
+function withdraw() {
+  let iban = document.getElementById("iban").value;
+  let amount = document.getElementById("amount").value;
+
+  fetch(API_URL + "?withdraw=1&email=" + email + "&iban=" + iban + "&amount=" + amount)
+  .then(r => r.text())
+  .then(msg => alert(msg));
+}
+
+function logout() {
+  localStorage.removeItem("email");
+  location.reload();
+}
+
+getBalance();
 </script>
+
+</body>
 </html>
