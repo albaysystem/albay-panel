@@ -1,52 +1,110 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ALBAY STEPS • Panel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{background:#000;color:#fff;font-family:Arial;text-align:center;margin:0;}
-.container{max-width:520px;margin:auto;background:#111;padding:20px;border-radius:12px;margin-top:40px;}
-input,button{width:100%;padding:12px;border:none;border-radius:6px;margin-top:10px;}
-button{background:#ff0000;color:#fff;font-weight:bold;}
+  :root { --bg:#000; --card:#111; --red:#e50914; --muted:#888; --txt:#fff; }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif}
+  .wrap{max-width:560px;margin:32px auto;padding:16px}
+  .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  h1{margin:6px 0 12px;text-align:center;font-size:22px;letter-spacing:.4px}
+  .row{display:flex;gap:10px;align-items:center;margin:10px 0}
+  input,button{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px}
+  input{background:#1a1a1a;color:#fff}
+  button{background:var(--red);color:#fff;font-weight:700;cursor:pointer}
+  .tiny{color:var(--muted);font-size:12px;text-align:center;margin-top:8px}
+  .balance{display:inline-block;background:#1f1f1f;padding:10px 14px;border-radius:10px;font-weight:700;margin:4px 0 10px}
+  label{font-size:12px;color:#bbb;margin-bottom:6px;display:block}
+  .mt{margin-top:12px}
 </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ALBAY STEPS • Panel</h1>
 
-<div class="container">
-<h2>ALBAY STEPS • Panel</h2>
-<p id="balance">Bakiye: 0 ₺</p>
-<button onclick="loadBalance()">Bakiyeyi Yenile</button>
+      <label>Telefon / Email</label>
+      <div class="row">
+        <input id="email" placeholder="9055xxxxxxx veya email" />
+        <button style="max-width:140px" onclick="saveEmail()">Kaydet</button>
+      </div>
 
-<h3>Para Çekme Talebi</h3>
-<input type="text" id="iban" placeholder="TR IBAN">
-<input type="number" id="amount" placeholder="Tutar">
-<button onclick="sendWithdraw()">Talep Gönder</button>
+      <div class="tiny">Telefon/Email <b>hafızaya alınır</b>. Değiştirmek istersen yazıp “Kaydet”e bas.</div>
 
-<button onclick="logout()">Çıkış Yap</button>
-</div>
+      <div style="text-align:center" class="mt">
+        <div class="balance">Bakiye: <span id="bal">0</span> ₺</div>
+      </div>
+      <button onclick="refreshBalance()">Bakiyeyi Yenile</button>
+
+      <hr style="border:0;border-top:1px solid #222;margin:18px 0">
+
+      <h1 style="font-size:18px">Para Çekme Talebi</h1>
+
+      <label>TR IBAN</label>
+      <input id="iban" placeholder="TRxxxxxxxxxxxxxxxxxxxxxx" />
+
+      <label class="mt">Tutar (₺)</label>
+      <input id="amount" type="number" inputmode="numeric" placeholder="Örn: 50" />
+
+      <button class="mt" onclick="sendWithdraw()">Talep Gönder</button>
+
+      <button class="mt" style="background:#3a3a3a" onclick="logout()">Çıkış Yap</button>
+      <div class="tiny" id="msg"></div>
+    </div>
+  </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyswecnhUaWo4p3QnskqW6smzi4M8v8ggICy81pFsJ4mbraOSEV3VNcrMThjPgUiH64/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbw01OAPtkTcocisZvvsPOfEcoIMvLYt3W7v03d83mVCdduvtWk9p5CwsEebGB2CEoru/exec";
 
-const email = localStorage.getItem("user");
-if(!email){ location.href="index.html"; }
+  const $ = id => document.getElementById(id);
+  function say(s){ $('msg').textContent = s; }
 
-function loadBalance(){
- fetch(API_URL + `?email=${email}`)
- .then(r=>r.text()).then(b=>document.getElementById("balance").innerHTML="Bakiye: "+b+" ₺");
-}
+  // email sakla/yükle
+  (function init(){
+    const saved = localStorage.getItem('albay_email') || '';
+    if(saved) $('email').value = saved;
+    refreshBalance();
+  })();
 
-function sendWithdraw(){
- let iban = document.getElementById("iban").value;
- let amount = document.getElementById("amount").value;
- fetch(API_URL + `?withdraw=1&email=${email}&iban=${iban}&amount=${amount}`)
- .then(r=>r.text()).then(alert);
-}
+  function saveEmail(){
+    const email = $('email').value.trim();
+    if(!email){ say('Telefon/Email gir.'); return; }
+    localStorage.setItem('albay_email', email);
+    say('Kaydedildi.');
+  }
 
-function logout(){ localStorage.removeItem("user"); location.href="index.html"; }
-loadBalance();
+  async function refreshBalance(){
+    const email = $('email').value.trim() || localStorage.getItem('albay_email');
+    if(!email){ $('bal').textContent = '0'; return; }
+    $('email').value = email;
+    try{
+      const r = await fetch(`${API_URL}?email=${encodeURIComponent(email)}&cb=${Date.now()}`);
+      const txt = await r.text(); // servis text döndürüyor
+      $('bal').textContent = txt.replace(/[^0-9.\-]/g,'') || '0';
+      say('');
+    }catch(e){ say('Bağlantı hatası.'); }
+  }
+
+  async function sendWithdraw(){
+    const email = $('email').value.trim() || localStorage.getItem('albay_email');
+    const iban  = $('iban').value.trim();
+    const amount= $('amount').value.trim();
+    if(!email || !iban || !amount){ say('Telefon/Email, IBAN ve Tutar zorunlu.'); return; }
+    try{
+      const r = await fetch(`${API_URL}?withdraw=1&email=${encodeURIComponent(email)}&iban=${encodeURIComponent(iban)}&amount=${encodeURIComponent(amount)}&cb=${Date.now()}`);
+      const txt = await r.text();
+      if(txt.includes('OK')){ say('Talep oluşturuldu.'); $('amount').value=''; }
+      else{ say('Talep oluşturulamadı.'); }
+    }catch(e){ say('Bağlantı hatası.'); }
+  }
+
+  function logout(){
+    localStorage.removeItem('albay_email');
+    $('email').value=''; $('bal').textContent='0';
+    say('Çıkış yapıldı.');
+  }
 </script>
-
 </body>
 </html>
