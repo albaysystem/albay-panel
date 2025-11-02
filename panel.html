@@ -2,114 +2,84 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALBAY STEPS • Panel</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap">
+<title>ALBAY STEPS • Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body {
-  margin: 0;
-  background: #000;
-  font-family: 'Montserrat', sans-serif;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-.container {
-  background: #111;
-  width: 90%;
-  max-width: 450px;
-  padding: 30px;
-  border-radius: 20px;
-  text-align: center;
-}
-input {
-  width: 100%;
-  padding: 13px;
-  border: none;
-  border-radius: 8px;
-  margin-top: 10px;
-  background: #222;
-  color: white;
-  font-size: 15px;
-}
-button {
-  width: 100%;
-  margin-top: 20px;
-  padding: 14px;
-  background: #d90000;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 17px;
-  cursor: pointer;
-}
-.logout {
-  background: #444;
-}
-.balance-box {
-  margin: 20px 0;
-  font-size: 20px;
-  padding: 12px;
-  background: #222;
-  border-radius: 8px;
-}
+body{background:#000;color:#fff;font-family:Arial;text-align:center;margin:0;}
+.container{max-width:520px;margin:auto;background:#111;padding:20px;border-radius:12px;margin-top:40px;}
+input,button{width:100%;padding:12px;border:none;border-radius:6px;margin-top:10px;}
+button{background:#ff0000;color:#fff;font-weight:bold;}
+table{width:100%;margin-top:20px;border-collapse:collapse;}
+td,th{border-bottom:1px solid #333;padding:8px;}
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>ALBAY STEPS • Panel</h2>
-  <div class="balance-box">
-    Bakiye: <span id="balance">0</span> ₺
-  </div>
+<h2>ALBAY STEPS • Admin Panel</h2>
 
-  <button onclick="getBalance()">Bakiyeyi Yenile</button>
+<h3>Bakiyeleri Gör</h3>
+<table id="usersTable">
+<tr><th>Kullanıcı</th><th>Bakiye (₺)</th></tr>
+</table>
+<button onclick="loadUsers()">Yenile</button>
 
-  <h3>Para Çekme Talebi</h3>
-  <input type="text" id="iban" placeholder="TR IBAN">
-  <input type="number" id="amount" placeholder="Tutar">
+<h3>Bakiye Ekle / Düş</h3>
+<input type="text" id="email" placeholder="Telefon veya Email">
+<input type="number" id="amount" placeholder="Örn: +20 veya -15">
+<button onclick="updateBalance()">Uygula</button>
 
-  <button onclick="withdraw()">Talep Gönder</button>
-  <button class="logout" onclick="logout()">Çıkış Yap</button>
+<h3>Çekim Talepleri</h3>
+<table id="withdrawTable">
+<tr><th>Kullanıcı</th><th>IBAN</th><th>Tutar</th></tr>
+</table>
+<button onclick="loadWithdraws()">Talepleri Yenile</button>
+
+<button onclick="logout()">Çıkış Yap</button>
 </div>
 
 <script>
-// giriş kontrol
-const user = localStorage.getItem("userEmail");
-if (!user) window.location.href = "index.html";
+const API_URL = "https://script.google.com/macros/s/AKfycbyKGnhEBtOwlRsuNbAWGP7OFU887akGiQs1jNyXU0IjymIAiu30kNdmhW1fjCxLIrnS/exec";
 
-// Google Script Linki
-const API_URL = "https://script.google.com/macros/s/AKfycbxPnjJLUmjyQ0CtFC04rpksLujxUmDyyXYsIbRtRmF3Y8Q93a5i1GnkqCARsnFNRqOE/exec";
-
-// Bakiye çek
-function getBalance() {
-  fetch(API_URL + "?action=getBalance&email=" + user)
-  .then(r => r.text())
-  .then(balance => document.getElementById("balance").innerText = balance);
+function loadUsers(){
+  fetch(API_URL + "?all=1")
+  .then(r=>r.json())
+  .then(data=>{
+    let table = document.getElementById("usersTable");
+    table.innerHTML = "<tr><th>Kullanıcı</th><th>Bakiye (₺)</th></tr>";
+    data.forEach(row=>{
+      table.innerHTML += `<tr><td>${row.email}</td><td>${row.balance}</td></tr>`;
+    });
+  });
 }
 
-// Para çekme talebi
-function withdraw() {
-  const iban = document.getElementById("iban").value;
-  const amount = document.getElementById("amount").value;
-
-  if(iban === "" || amount === "") {
-    alert("İBAN ve Tutar boş olamaz.");
-    return;
-  }
-
-  fetch(API_URL + "?action=withdraw&email=" + user + "&iban=" + iban + "&amount=" + amount)
-  .then(r => r.text())
-  .then(msg => alert("Talep Gönderildi ✅"));
+function updateBalance(){
+  let email = document.getElementById("email").value;
+  let amount = document.getElementById("amount").value;
+  fetch(API_URL + `?admin=1&email=${email}&amount=${amount}`)
+  .then(r=>r.text())
+  .then(msg=>{ alert(msg); loadUsers(); });
 }
 
-// Çıkış
-function logout() {
-  localStorage.removeItem("userEmail");
-  window.location.href = "index.html";
+function loadWithdraws(){
+  fetch(API_URL + "?withdraws=1")
+  .then(r=>r.json())
+  .then(data=>{
+    let table = document.getElementById("withdrawTable");
+    table.innerHTML = "<tr><th>Kullanıcı</th><th>IBAN</th><th>Tutar</th></tr>";
+    data.forEach(row=>{
+      table.innerHTML += `<tr><td>${row.email}</td><td>${row.iban}</td><td>${row.amount} ₺</td></tr>`;
+    });
+  });
 }
+
+function logout(){
+  localStorage.removeItem("admin");
+  location.reload();
+}
+
+loadUsers();
+loadWithdraws();
 </script>
 
 </body>
