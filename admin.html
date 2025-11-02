@@ -1,110 +1,66 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ALBAY STEPS • Admin Panel</title>
-<style>
-  :root{--bg:#000;--card:#111;--red:#e50914;--txt:#fff;}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif}
-  .wrap{max-width:880px;margin:32px auto;padding:16px}
-  .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.35);margin-bottom:18px}
-  h1{margin:6px 0 12px;text-align:center;font-size:22px;letter-spacing:.4px}
-  h2{font-size:18px;margin:0 0 10px}
-  input,button{padding:10px;border:none;border-radius:8px;font-size:14px}
-  input{background:#1a1a1a;color:#fff}
-  button{background:var(--red);color:#fff;font-weight:700;cursor:pointer}
-  table{width:100%;border-collapse:collapse}
-  th,td{border-bottom:1px solid #222;padding:10px;text-align:left;font-size:14px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
-  .grow{flex:1}
-  .muted{opacity:.75}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ALBAY STEPS • Admin Panel</title>
+  <style>
+    body{background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;margin:0}
+    .wrap{max-width:560px;margin:40px auto;padding:20px;background:#111;border-radius:14px}
+    h1{font-size:22px;text-align:center;margin:0 0 16px}
+    label{display:block;margin:12px 0 6px;color:#bbb;font-size:13px}
+    input,button{width:100%;padding:12px;border:none;border-radius:8px}
+    input{background:#191919;color:#fff;border:1px solid #2b2b2b}
+    .row{display:flex;gap:10px}
+    .row > *{flex:1}
+    .badge{display:inline-block;background:#181818;border:1px solid #333;padding:10px 14px;border-radius:10px;margin-top:8px}
+    button{background:#e30606;color:#fff;font-weight:700;margin-top:10px;cursor:pointer}
+    .muted{color:#8a8a8a;font-size:12px;margin-top:8px}
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
+  <div class="wrap">
     <h1>ALBAY STEPS • Admin Panel</h1>
-    <div class="muted" id="msg"></div>
-  </div>
 
-  <div class="card">
-    <h2>Kullanıcı Bakiyeleri</h2>
-    <div class="row"><button onclick="loadUsers()">Yenile</button></div>
-    <table id="usersTable">
-      <thead><tr><th>Kullanıcı</th><th>Bakiye (₺)</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <label>Kullanıcı (Telefon / Email)</label>
+    <input id="email" placeholder="9055... veya email" />
 
-  <div class="card">
-    <h2>Bakiye Ekle / Düş</h2>
     <div class="row">
-      <input class="grow" id="email" placeholder="Telefon veya Email">
-      <input style="max-width:160px" id="amount" type="number" placeholder="+20 ya da -15">
-      <button style="min-width:140px" onclick="updateBalance()">Uygula</button>
+      <button id="showBtn">Bakiyeyi Göster</button>
+      <div class="badge">Bakiye: <span id="bal">0</span> ₺</div>
     </div>
+
+    <label>Yeni Bakiye (tam sayı)</label>
+    <input id="amount" type="number" placeholder="Örn: 50" />
+
+    <button id="applyBtn">Bakiye Ekle/Düş (SET)</button>
+
+    <p class="muted">Not: Bu panel mevcut Apps Script uç noktalarıyla çalışır: <b>balance</b>, <b>admin</b>. (Çekim listesi göstermek istersen, script’e ayrıca <code>withdraws=1</code> listelemesi ekleyebiliriz.)</p>
   </div>
 
-  <div class="card">
-    <h2>Çekim Talepleri</h2>
-    <div class="row"><button onclick="loadWithdraws()">Yenile</button></div>
-    <table id="withdrawTable">
-      <thead><tr><th>Kullanıcı</th><th>IBAN</th><th>Tutar</th><th>Durum</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
+    const $ = id => document.getElementById(id);
 
-</div>
+    async function showBalance(){
+      const email = $("email").value.trim();
+      if(!email){ alert("Kullanıcı gir."); return; }
+      const res = await fetch(`${API_URL}?balance=1&email=${encodeURIComponent(email)}`);
+      $("bal").textContent = await res.text();
+    }
 
-<script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbw01OAPtkTcocisZvvsPOfEcoIMvLYt3W7v03d83mVCdduvtWk9p5CwsEebGB2CEoru/exec";
-  const $ = s => document.querySelector(s);
-  const $$ = s => document.querySelectorAll(s);
-  const say = t => $('#msg').textContent = t || '';
+    async function applyBalance(){
+      const email = $("email").value.trim();
+      const amount = $("amount").value.trim();
+      if(!email || amount===""){ alert("Kullanıcı ve yeni bakiye gerekli."); return; }
+      const res = await fetch(`${API_URL}?admin=1&email=${encodeURIComponent(email)}&amount=${encodeURIComponent(amount)}`);
+      const msg = await res.text();
+      alert("Sonuç: " + msg);
+      await showBalance();
+    }
 
-  async function loadUsers(){
-    try{
-      const r = await fetch(`${API_URL}?all=1&cb=${Date.now()}`);
-      const arr = await r.json();
-      const tb = $('#usersTable tbody'); tb.innerHTML='';
-      arr.forEach(u=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${u.email}</td><td>${u.balance}</td>`;
-        tb.appendChild(tr);
-      });
-      say(`Toplam ${arr.length} kullanıcı listelendi.`);
-    }catch(e){ say('Kullanıcılar alınamadı.'); }
-  }
-
-  async function updateBalance(){
-    const email = $('#email').value.trim();
-    const amount = $('#amount').value.trim();
-    if(!email || !amount){ say('Email/Telefon ve tutar gerekli.'); return; }
-    try{
-      const r = await fetch(`${API_URL}?admin=1&email=${encodeURIComponent(email)}&amount=${encodeURIComponent(amount)}&cb=${Date.now()}`);
-      const txt = await r.text();
-      if(txt.includes('OK')){ say('Güncellendi.'); loadUsers(); }
-      else{ say('Güncelleme başarısız.'); }
-    }catch(e){ say('Bağlantı hatası.'); }
-  }
-
-  async function loadWithdraws(){
-    try{
-      const r = await fetch(`${API_URL}?withdraws=1&cb=${Date.now()}`);
-      const arr = await r.json();
-      const tb = $('#withdrawTable tbody'); tb.innerHTML='';
-      arr.forEach(w=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${w.email}</td><td>${w.iban||''}</td><td>${w.amount} ₺</td><td>${w.status||'pending'}</td>`;
-        tb.appendChild(tr);
-      });
-      say(`Toplam ${arr.length} çekim talebi listelendi.`);
-    }catch(e){ say('Çekim talepleri alınamadı.'); }
-  }
-
-  // otomatik yükle
-  loadUsers(); loadWithdraws();
-</script>
+    $("showBtn").onclick = showBalance;
+    $("applyBtn").onclick = applyBalance;
+  </script>
 </body>
 </html>
