@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>ALBAY STEPS • Kayıt Ol</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{background:#000;color:#fff;font-family:Arial;margin:0;padding:0;text-align:center;}
+.container{max-width:400px;margin:80px auto;background:#111;padding:20px;border-radius:12px;}
+input,button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:6px;font-size:16px;}
+button{background:#ff0000;color:#fff;font-weight:bold;}
+a{color:#ff0000;text-decoration:none;display:block;margin-top:15px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>ALBAY STEPS</h2>
+<p>Kayıt Ol</p>
+
+<input type="text" id="email" placeholder="Telefon veya Email">
+<button onclick="register()">Kayıt Ol</button>
+
+<a href="login.html">Zaten hesabın var mı? Giriş Yap</a>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
+
+function register(){
+  let email = document.getElementById("email").value;
+  
+  fetch(API_URL + "?register=1&email=" + email)
+  .then(r=>r.text())
+  .then(t=>{
+    alert(t);
+    localStorage.setItem("email", email);
+    window.location.href = "panel.html";
+  })
+}
+</script>
+
+</body>
+</html>
