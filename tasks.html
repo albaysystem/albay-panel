@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ALBAY STEPS • Görevler</title>
+<style>
+  :root{--bg:#000;--card:#111;--red:#e50914;--muted:#8a8a8a}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:#fff;font-family:Arial,Helvetica,sans-serif}
+  .wrap{max-width:640px;margin:24px auto;padding:16px}
+  .top{display:flex;gap:12px;align-items:center;justify-content:space-between}
+  .btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700}
+  .muted{color:var(--muted);font-size:12px}
+  .card{background:var(--card);border-radius:12px;padding:16px;margin-top:14px}
+  .title{font-size:18px;font-weight:800;margin:0 0 8px}
+  .desc{font-size:14px;margin:0 0 10px;color:#ddd}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #222;background:#0a0a0a;color:#fff}
+  .chip{background:#1a1a1a;border-radius:6px;padding:6px 10px;font-size:12px}
+  .empty{margin-top:28px;text-align:center;color:#bbb}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <button class="btn" onclick="history.back()">← Panele Dön</button>
+    <div class="muted">Kullanıcı: <span id="u"></span></div>
+  </div>
+
+  <h2 style="margin:16px 0 8px">Görevler</h2>
+  <div class="muted">Görevleri tamamla, ödülünü bakiyene ekleyelim.</div>
+
+  <div id="list"></div>
+  <div id="empty" class="empty" style="display:none">Şu an aktif görev yok.</div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
+
+// login/register sırasında kaydettiğimiz mail/telefon
+function getEmail(){
+  const e = localStorage.getItem("userEmail") || localStorage.getItem("albay_email") || "";
+  return (e||"").trim();
+}
+
+// Görevleri getir (tasks=1 çalışmazsa getTasks=1'i dener)
+async function fetchTasks(){
+  try{
+    let r = await fetch(API_URL + "?tasks=1");
+    let t = await r.text();
+    try { return JSON.parse(t); } catch(_){}
+    r = await fetch(API_URL + "?getTasks=1");
+    t = await r.text();
+    return JSON.parse(t);
+  }catch(e){ console.error(e); return []; }
+}
+
+function taskCard(t){
+  const el = document.createElement("div");
+  el.className = "card";
+  el.innerHTML = `
+    <div class="row" style="justify-content:space-between">
+      <h3 class="title">${t.title}</h3>
+      <span class="chip">+${t.reward} ₺</span>
+    </div>
+    <p class="desc">${t.desc||""}</p>
+    <div class="muted" style="margin-bottom:8px">
+      Tür: <b>${t.type}</b> • Limit: <b>${t.limit||1}</b>
+    </div>
+    <div id="input-${t.id}"></div>
+    <div class="row">
+      <button class="btn" onclick='complete(${JSON.stringify(t)})'>Tamamla</button>
+    </div>
+  `;
+  // Gerekli alan
+  const holder = el.querySelector(`#input-${t.id}`);
+  if(t.type === "instagram"){
+    holder.innerHTML = `
+      <input id="val-${t.id}" placeholder="Takip ettiğin IG kullanıcı adını yaz (ör: @albaysteps)" />
+    `;
+  }else if(t.type === "steps"){
+    holder.innerHTML = `
+      <input id="val-${t.id}" type="number" inputmode="numeric" placeholder="Bugünkü adım sayın (örn: 5000)" />
+    `;
+  }else{
+    holder.innerHTML = `<input id="val-${t.id}" placeholder="Kanıt / Not" />`;
+  }
+  return el;
+}
+
+async function render(){
+  const email = getEmail();
+  document.getElementById("u").textContent = email || "Giriş yapmadın";
+  if(!email){ alert("Önce giriş yap."); location.href="login.html"; return; }
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  const items = await fetchTasks();
+  if(!items.length){ document.getElementById("empty").style.display = "block"; return; }
+  items.forEach(t => list.appendChild(taskCard(t)));
+}
+
+// Görev tamamla (done=1 çalışmazsa completeTask=1 dener)
+async function complete(t){
+  const email = getEmail();
+  if(!email){ alert("Önce giriş yap."); return; }
+  const val = (document.getElementById("val-"+t.id)?.value || "").trim();
+  if(t.type === "instagram" && !val){ alert("Takip ettiğin kullanıcı adını yaz."); return; }
+  if(t.type === "steps"){
+    const n = Number(val);
+    if(!n || n <= 0) { alert("Geçerli adım sayısı gir."); return; }
+  }
+  try{
+    // 1. seçenek (router varsa)
+    let url = `${API_URL}?done=1&email=${encodeURIComponent(email)}&taskId=${encodeURIComponent(t.id)}&value=${encodeURIComponent(val)}`;
+    let r = await fetch(url); let msg = await r.text();
+    if(!msg || /Hata|Error|undefined/i.test(msg)){
+      // 2. seçenek (doGet içinde isimle çalışan versiyon)
+      url = `${API_URL}?completeTask=1&email=${encodeURIComponent(email)}&taskId=${encodeURIComponent(t.id)}&value=${encodeURIComponent(val)}`;
+      r = await fetch(url); msg = await r.text();
+    }
+    alert(msg || "Görev kaydedildi.");
+  }catch(e){
+    console.error(e);
+    alert("Görev tamamlanamadı.");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", render);
+</script>
+</body>
+</html>
