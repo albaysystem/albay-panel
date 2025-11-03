@@ -5,74 +5,84 @@
 <title>ALBAY STEPS • Panel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{background:#000;color:#fff;font-family:Arial;margin:0;text-align:center;}
-.container{max-width:400px;margin:40px auto;padding:20px;}
-h2{margin-bottom:10px;}
-#balance{font-size:22px;font-weight:bold;margin:10px 0;}
-button,input{width:100%;padding:14px;margin-top:10px;border:none;border-radius:6px;font-size:16px;}
-button{background:#ff0000;color:#fff;font-weight:bold;}
-button#logout{background:#444;}
+body{background:#000;margin:0;font-family:Arial;color:#fff;text-align:center;}
+.container{max-width:420px;margin:40px auto;padding:20px;background:#111;border-radius:12px;}
+h1{margin-bottom:10px;color:#ff0000;}
+button{width:100%;padding:14px;margin-top:10px;border:none;border-radius:6px;background:#ff0000;color:#fff;font-size:17px;font-weight:bold;}
+input{width:100%;padding:12px;margin-top:8px;border-radius:6px;border:none;font-size:16px;}
+.hint{color:#bbb;margin-top:8px;font-size:14px;}
 </style>
 </head>
 <body>
 
 <div class="container">
-<h2>ALBAY STEPS • Panel</h2>
+<h1>ALBAY STEPS • Panel</h1>
+<p>Bakiye: <span id="balance">0 ₺</span></p>
 
-<div id="balance">Bakiye: 0 ₺</div>
-<button onclick="refreshBalance()">Bakiyeyi Yenile</button>
+<button id="refreshBtn">Bakiyeyi Yenile</button>
+<button onclick="location.href='tasks.html'">Görevler</button>
 
-<h3 style="margin-top:25px;">Para Çekme Talebi</h3>
+<h3 style="margin-top:22px;">Para Çekme Talebi</h3>
 <input id="ibanInput" placeholder="TR IBAN" />
-<input id="amountInput" type="number" placeholder="Örn: 50" />
-<button onclick="sendWithdraw()">Talep Gönder</button>
+<input id="amountInput" type="number" placeholder="Tutar (₺)" />
+<button id="sendBtn">Talep Gönder</button>
 
-<button id="logout" onclick="logout()">Çıkış Yap</button>
+<div class="hint">Telefon, IBAN ve tutar zorunludur.</div>
+
+<button id="logoutBtn" style="background:#444;margin-top:18px;">Çıkış Yap</button>
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
 
+// Kullanıcı email/telefon
 function getEmail(){
-  const e=localStorage.getItem("userEmail");
-  return e?e.trim():"";
+  const e = localStorage.getItem('userEmail');
+  return e ? e.trim() : "";
 }
 
-function logout(){
-  localStorage.removeItem("userEmail");
-  window.location.href="login.html";
-}
-
+// Bakiye yenileme
 async function refreshBalance(){
-  try{
-    const email=getEmail();
-    if(!email){alert("Giriş yapmadın.");return;}
-    const res=await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
-    const txt=await res.text();
-    const bal=Number(txt)||0;
-    document.getElementById("balance").textContent="Bakiye: "+bal+" ₺";
-  }catch(e){alert("Bakiye alınamadı.");}
+  try {
+    const email = getEmail();
+    if(!email){ alert("Önce giriş yapın."); return; }
+    const res = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
+    const txt = await res.text();
+    document.getElementById("balance").textContent = (Number(txt)||0) + " ₺";
+  } catch(e){ alert("Bakiye alınamadı."); }
 }
 
+// Para talebi
 async function sendWithdraw(){
-  const email=getEmail();
-  if(!email){alert("Giriş yap.");return;}
+  const email = getEmail();
+  if(!email){ alert("Önce giriş yapın."); return; }
 
-  const iban=document.getElementById("ibanInput").value.trim().toUpperCase();
-  const amount=Number(document.getElementById("amountInput").value);
+  const iban = document.getElementById("ibanInput").value.trim().toUpperCase();
+  const amount = Number(document.getElementById("amountInput").value);
 
-  if(!iban.startsWith("TR")||iban.length<20){alert("Geçerli IBAN gir.");return;}
-  if(!amount||amount<=0){alert("Tutar geçersiz.");return;}
+  if(!iban.startsWith("TR") || iban.length < 20){ alert("Geçerli TR IBAN girin."); return; }
+  if(amount <= 0){ alert("Geçerli miktar girin."); return; }
 
-  try{
-    const res=await fetch(`${API_URL}?withdraw=1&email=${encodeURIComponent(email)}&iban=${encodeURIComponent(iban)}&amount=${amount}`);
-    const msg=await res.text();
-    alert(msg);
-    refreshBalance();
-  }catch(e){alert("Talep gönderilemedi.");}
+  const url = `${API_URL}?withdraw=1&email=${encodeURIComponent(email)}&iban=${encodeURIComponent(iban)}&amount=${encodeURIComponent(amount)}`;
+  const res = await fetch(url);
+  const msg = await res.text();
+  alert(msg);
+  refreshBalance();
+  document.getElementById("amountInput").value = "";
 }
 
-document.addEventListener("DOMContentLoaded",refreshBalance);
+// Çıkış
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.removeItem('userEmail');
+  location.href = "login.html";
+};
+
+// Butonları bağla
+document.getElementById("refreshBtn").onclick = refreshBalance;
+document.getElementById("sendBtn").onclick = sendWithdraw;
+
+// İlk yüklemede bakiye getir
+refreshBalance();
 </script>
 
 </body>
