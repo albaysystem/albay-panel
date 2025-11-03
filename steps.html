@@ -1,29 +1,35 @@
-<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Çekim</title></head><body>
-<h2>Çekim Talebi</h2>
-<button id="withdrawBtn">Çekim Talebi Gönder</button>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBdopyZfXQ9NcTpAXYFvt3ti3UNxKaP1YM",
-  authDomain: "albay-system.firebaseapp.com",
-  projectId: "albay-system",
-  storageBucket: "albay-system.appspot.com",
-  messagingSenderId: "503510278441",
-  appId: "1:503510278441:web:b5b6048292cd3f85e7f8df"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-document.getElementById("withdrawBtn").addEventListener("click", async function() {
-  const isim = localStorage.getItem("username") || "Bilinmiyor";
-  await addDoc(collection(db, "withdraw_requests"), {
-    kullanici: isim,
-    tarih: new Date().toLocaleString()
-  });
-  alert("✅ Çekim talebi gönderildi!");
-});
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adım • ALBAY STEPS</title>
+<script>const API_URL="https://script.google.com/macros/s/AKfycbxHcjw7HYAM6AgrpC7vF27oSeVqJo3TSngJDnS-ELblvvVNDq3ywTU0xqyRL-IG5bAY/exec";</script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:Arial;text-align:center}
+.box{max-width:420px;margin:40px auto;background:#111;padding:20px;border-radius:12px}
+h2{color:#e30613;margin:0 0 10px}
+input,button{width:100%;padding:14px;border:none;border-radius:8px;margin-top:10px}
+button{background:#e30613;color:#fff;font-weight:700}
+.small{color:#bbb;font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>Günlük Adım</h2>
+  <div class="small">5000+ adım = ödül</div>
+  <input id="steps" type="number" placeholder="Bugünkü adım sayısı (örn: 6000)">
+  <button onclick="claim()">Gönder</button>
+  <button style="background:#444" onclick="location.href='panel.html'">Panele Dön</button>
+</div>
+<script>
+function me(){return (localStorage.getItem('userEmail')||'').trim()}
+async function claim(){
+  const s=Number(document.getElementById('steps').value||0);
+  if(!me()) return alert('Önce giriş yap');
+  if(!s||s<1) return alert('Adım gir');
+  const r=await fetch(`${API_URL}?complete=1&email=${encodeURIComponent(me())}&taskId=201&value=${encodeURIComponent(s)}`);
+  alert(await r.text());
+}
 </script>
-</body></html>
+</body>
+</html>
