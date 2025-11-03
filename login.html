@@ -1,49 +1,32 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>Giriş Yap • ALBAY STEPS</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giriş • ALBAY STEPS</title>
+<script>const API_URL="https://script.google.com/macros/s/AKfycbxHcjw7HYAM6AgrpC7vF27oSeVqJo3TSngJDnS-ELblvvVNDq3ywTU0xqyRL-IG5bAY/exec";</script>
 <style>
-body{background:#000;color:#fff;text-align:center;font-family:Arial;margin:0;}
-.container{max-width:420px;margin:80px auto;background:#111;padding:25px;border-radius:12px;}
-input,button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:6px;font-size:16px;}
-button{background:#ff0000;color:#fff;font-weight:bold;cursor:pointer;}
+body{margin:0;background:#000;color:#fff;font-family:Arial;text-align:center}
+.box{max-width:420px;margin:60px auto;background:#111;padding:20px;border-radius:12px}
+h2{color:#e30613;margin:0 0 12px}
+input,button{width:100%;padding:14px;border:none;border-radius:8px;margin-top:10px;font-size:16px}
+button{background:#e30613;color:#fff;font-weight:700}
+.small{color:#bbb;font-size:12px;margin-top:8px}
 </style>
 </head>
 <body>
-
-<div class="container">
-<h2>Giriş Yap</h2>
-
-<input id="email" placeholder="Telefon veya E-mail">
-<input id="password" type="password" placeholder="Şifre">
-
-<button onclick="login()">Giriş Yap</button>
-<button onclick="window.location.href='register.html'">Kayıt Ol</button>
+<div class="box">
+  <h2>Giriş Yap</h2>
+  <input id="email" placeholder="Telefon veya e-posta">
+  <button onclick="go()">Giriş</button>
+  <div class="small">Hesabın yok mu? <a href="register.html">Kayıt ol</a></div>
 </div>
-
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyueArV7uzUNeX0Qz3I22CXbvKyeOf6lNvdWiBMJM0FRNwYAUSTFM-0ObNEdHw0S8rE/exec";
-
-async function login(){
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value.trim();
-
-  if(!email || !pass){
-    alert("Bilgiler eksik!"); return;
-  }
-
-  const res = await fetch(`${API_URL}?login=1&email=${encodeURIComponent(email)}&pass=${encodeURIComponent(pass)}`);
-  const msg = await res.text();
-  alert(msg);
-
-  if(msg.includes("OK")){
-    localStorage.setItem("userEmail", email);
-    window.location.href = "panel.html";
-  }
+function go(){
+  const e=(document.getElementById('email').value||'').trim();
+  if(!e) return alert('Telefon/e-posta gir');
+  localStorage.setItem('userEmail',e);
+  location.href='panel.html';
 }
 </script>
-
 </body>
 </html>
